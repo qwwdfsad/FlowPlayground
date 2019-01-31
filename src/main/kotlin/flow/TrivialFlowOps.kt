@@ -2,21 +2,11 @@
 
 package flow
 
-import io.reactivex.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-
-suspend inline fun <T> Flow<T>.consumeEach(crossinline action: suspend (T) -> Unit) =
+suspend fun <T> Flow<T>.consumeEach(action: suspend (T) -> Unit) =
     consumeEach(object : FlowSubscription<T> {
         override suspend fun push(value: T) = action(value)
     })
 
-suspend inline fun <T> Flow<T>.consumeEachOn(ctx: CoroutineContext, crossinline action: suspend (T) -> Unit) =
-    withContext(ctx) {
-        consumeEach(object : FlowSubscription<T> {
-            override suspend fun push(value: T) = action(value)
-        })
-    }
 
 inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     consumeEach { value ->
@@ -31,6 +21,13 @@ inline fun <T, R> Flow<T>.map(crossinline transform: suspend (T) -> R): Flow<R> 
 }
 
 fun <T> Flow<T>.delay(millis: Long): Flow<T> = flow {
+    kotlinx.coroutines.delay(millis)
+    consumeEach {
+        push(it)
+    }
+}
+
+fun <T> Flow<T>.delayEach(millis: Long): Flow<T> = flow {
     consumeEach {
         kotlinx.coroutines.delay(millis)
         push(it)
@@ -48,9 +45,7 @@ fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = flow {
 }
 
 suspend fun main()  {
-    listOf(1, 1, 2, 1, 3).asFlow().distinctUntilChanged().consumeEach {
+    listOf(1, 1, 2, 1, 3).asFlow().delay(3000).distinctUntilChanged().consumeEach {
         println("HM: $it")
-
     }
-
 }
