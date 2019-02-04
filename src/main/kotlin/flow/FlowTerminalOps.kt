@@ -2,9 +2,8 @@
 
 package flow
 
-import io.reactivex.*
+import flow.operators.*
 import java.util.*
-import java.util.concurrent.*
 
 
 suspend fun <T> Flow<T>.toList(): List<T> = toCollection(ArrayList())

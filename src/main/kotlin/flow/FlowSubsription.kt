@@ -1,5 +1,5 @@
 package flow
 
-interface FlowSubscription<T> {
+interface FlowSubscriber<T> {
     suspend fun push(value: T)
 }

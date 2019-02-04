@@ -3,6 +3,7 @@ package tck
 import kotlinx.coroutines.*
 import org.reactivestreams.*
 import flow.*
+import flow.operators.*
 import java.util.concurrent.atomic.*
 
 @Suppress("PublisherImplementation")

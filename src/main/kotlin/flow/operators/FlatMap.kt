@@ -1,5 +1,6 @@
-package flow
+package flow.operators
 
+import flow.*
 import io.reactivex.*
 import io.reactivex.functions.*
 import kotlinx.coroutines.*
@@ -10,26 +11,28 @@ import java.util.concurrent.atomic.*
 fun <T, R> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> = flow {
     // Let's try to leverage the fact that flatMap is never contended
     val flatMap = FlatMapFlow(this)
-    val jobs = ArrayList<Job>()
+    val root = CompletableDeferred<Unit>()
     consumeEach {
         val inner = mapper(it)
-        jobs += GlobalScope.launch(Dispatchers.Unconfined) {
+        GlobalScope.launch(root + Dispatchers.Unconfined) {
             inner.consumeEach { value ->
                 flatMap.push(value)
             }
         }
     }
 
-    jobs.joinAll()
+    root.complete(Unit)
+    root.await()
 }
 
-private class FlatMapFlow<T>(private val downstream: FlowSubscription<T>) {
+private class FlatMapFlow<T>(private val downstream: FlowSubscriber<T>) {
     private val channel: Channel<T> by lazy { Channel<T>(16) }
     private val inProgress = AtomicBoolean(false)
 
     suspend fun push(value: T) {
         if (!inProgress.compareAndSet(false, true)) {
             channel.send(value)
+            // TODO after a while it does not look that reliable
             if (inProgress.compareAndSet(false, true)) {
                 helpPush()
             }

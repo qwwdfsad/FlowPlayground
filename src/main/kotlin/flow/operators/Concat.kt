@@ -1,4 +1,6 @@
-package flow
+package flow.operators
+
+import flow.*
 
 fun <T> Flow<Flow<T>>.concat(): Flow<T> = flow {
     consumeEach {
@@ -8,8 +10,6 @@ fun <T> Flow<Flow<T>>.concat(): Flow<T> = flow {
         }
     }
 }
-
-fun <T> flow(vararg elements: T) = elements.asIterable().asFlow()
 
 suspend fun main() {
     val f1 = flow(1, 2, 3).delayEach(1000)

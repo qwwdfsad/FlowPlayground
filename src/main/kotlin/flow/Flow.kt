@@ -1,8 +1,10 @@
 package flow
 
+import flow.operators.*
+
 
 interface Flow<T> {
-    suspend fun consumeEach(consumer: FlowSubscription<T>)
+    suspend fun subscribe(consumer: FlowSubscriber<T>)
 }
 
 

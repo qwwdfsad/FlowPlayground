@@ -1,9 +1,11 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package flow
+package flow.operators
+
+import flow.*
 
 suspend fun <T> Flow<T>.consumeEach(action: suspend (T) -> Unit) =
-    consumeEach(object : FlowSubscription<T> {
+    subscribe(object : FlowSubscriber<T> {
         override suspend fun push(value: T) = action(value)
     })
 
