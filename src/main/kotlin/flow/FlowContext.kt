@@ -20,7 +20,14 @@ suspend fun main2() {
     }
 }
 
-fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = TODO()
+fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
+    GlobalScope.launch(coroutineContext) {
+        // TODO exception
+        flowBridge {
+            push(it)
+        }
+    }
+}
 
 fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> = flow {
     val channel = Channel<T>(bufferSize)
@@ -39,14 +46,22 @@ fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, buffer
 
 suspend fun main() {
     val computation = { println("Computing in $t"); 42 }
+    val upstreamContext = newSingleThreadContext("Upstream context")
+    val intermediateContext = newSingleThreadContext("Intermediate context")
+    val downstreamContext = newSingleThreadContext("Downstream context")
 
     computation.flow()
-        .withDownstreamContext(newSingleThreadContext("Test Context"))
+        .filter {
+            println("Filtering in $t")
+            true
+        }
+        .withUpstreamContext(upstreamContext)
+        .withDownstreamContext(intermediateContext)
         .map {
             println("Mapping in $t")
             it
         }
-        .withDownstreamContext(Dispatchers.Default)
+        .withDownstreamContext(downstreamContext)
         .flowBridge {
             println("Consuming in $t")
         }
@@ -57,17 +72,30 @@ suspend fun main() {
 }
 
 private fun rxExample() {
-    val obs = Flowable.fromCallable {
+    val upstreamContext = newSingleThreadContext("Upstream context")
+    val intermediateContext = newSingleThreadContext("Intermediate context")
+    val downstreamContext = newSingleThreadContext("Downstream context")
+
+    val flowable = Flowable.fromCallable {
         println("Doing IO operation in $t")
         42
     }
 
-    obs.observeOn(Schedulers.newThread(), false, 32) // <- uhm, changes downstream ctx
-        .subscribeOn(Schedulers.io()) // <- uhm x2, changes upstream ctx
-        .map { println("Mapping I/O result in $t") }
+    flowable
+        .filter {
+            println("Filtering in $t")
+            true
+        }
+        .subscribeOn(upstreamContext.scheduler) // changes upstream ctx
+        .observeOn(intermediateContext.scheduler, false, 32) // <- changes downstream ctx
+        .map { println("Mapping in $t") }
+        .observeOn(downstreamContext.scheduler, false, 32) // <- changes downstream ctx
         .subscribe {
-            println("Consuming I/O result in $t")
+            println("Consuming in $t")
         }
 
     Thread.sleep(10000)
+    System.exit(-1)
 }
+
+val ExecutorCoroutineDispatcher.scheduler get () = Schedulers.from(executor)
