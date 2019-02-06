@@ -4,7 +4,7 @@ import flow.*
 
 fun <T> Flow<T>.count(): Flow<Long> = flow {
     var i = 0L
-    consumeEach {
+    flowBridge {
         ++i
     }
     push(i)
@@ -22,14 +22,14 @@ private suspend fun example2() {
         42
     }
 
-    flow(f1, f2).flatMap { it }.count().consumeEach {
+    flow(f1, f2).flatMap { it }.count().flowBridge {
         println("$it elements")
     }
 }
 
 
 private suspend fun example1() {
-    flow(1, 2, 3, 4).delayEach(100).count().consumeEach {
+    flow(1, 2, 3, 4).delayEach(100).count().flowBridge {
         println("$it elements")
     }
 }

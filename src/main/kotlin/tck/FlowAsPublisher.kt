@@ -21,7 +21,7 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
         // This is actually optimizable
         private var job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
-            flow.consumeEach { value ->
+            flow.flowBridge { value ->
 
                 if (requested.get() == 0L) {
                     suspendCancellableCoroutine<Unit> {

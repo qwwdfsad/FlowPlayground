@@ -5,7 +5,6 @@ import io.reactivex.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
 
 
@@ -16,7 +15,7 @@ suspend fun main2() {
 
     f.map {
         println("Mapping I/O result in $t")
-    }.consumeEach {
+    }.flowBridge {
         println("Consuming I/O result in $t")
     }
 }
@@ -33,7 +32,7 @@ fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, buffer
         }
     }
 
-    consumeEach {
+    flowBridge {
         channel.send(it)
     }
 }
@@ -48,7 +47,7 @@ suspend fun main() {
             it
         }
         .withDownstreamContext(Dispatchers.Default)
-        .consumeEach {
+        .flowBridge {
             println("Consuming in $t")
         }
 
@@ -71,5 +70,4 @@ private fun rxExample() {
         }
 
     Thread.sleep(10000)
-
 }

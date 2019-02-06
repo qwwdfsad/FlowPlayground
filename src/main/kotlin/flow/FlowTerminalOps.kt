@@ -13,7 +13,7 @@ suspend fun <T> Flow<T>.toSet(): Set<T> = toCollection(LinkedHashSet())
 suspend inline fun <S, T : S> Flow<T>.reduce(crossinline operation: suspend (acc: S, value: T) -> S): S {
     var found = false
     var accumulator: S? = null
-    consumeEach { value ->
+    flowBridge { value ->
         accumulator = if (found) {
             operation(accumulator as S, value)
         } else {
@@ -27,7 +27,7 @@ suspend inline fun <S, T : S> Flow<T>.reduce(crossinline operation: suspend (acc
 
 suspend inline fun <T, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
     var accumulator = initial
-    consumeEach { value ->
+    flowBridge { value ->
         accumulator = operation(accumulator, value)
     }
     return accumulator

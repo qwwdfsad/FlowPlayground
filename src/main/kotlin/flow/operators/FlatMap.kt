@@ -12,10 +12,10 @@ fun <T, R> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> = flow {
     // Let's try to leverage the fact that flatMap is never contended
     val flatMap = FlatMapFlow(this)
     val root = CompletableDeferred<Unit>()
-    consumeEach {
+    flowBridge {
         val inner = mapper(it)
         GlobalScope.launch(root + Dispatchers.Unconfined) {
-            inner.consumeEach { value ->
+            inner.flowBridge { value ->
                 flatMap.push(value)
             }
         }
@@ -60,7 +60,7 @@ suspend fun flowFlatMap() {
         val index = it
         val inner = Array(it) { "$index flowable, $it's element" }.asIterable().asFlow()
         inner.delayEach(if (it == 5) it * 500L else it * 1000L)
-    }.consumeEach {
+    }.flowBridge {
         val diff = (System.currentTimeMillis() - base) / 1000 * 1000
         println("$it, ($diff)")
     }
