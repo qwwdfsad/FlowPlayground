@@ -2,11 +2,9 @@ package flow
 
 import flow.operators.*
 
-
 interface Flow<T> {
     suspend fun subscribe(consumer: FlowSubscriber<T>)
 }
-
 
 @PublishedApi
 internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)

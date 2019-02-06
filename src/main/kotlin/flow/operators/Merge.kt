@@ -1,6 +1,6 @@
-package flow
+package flow.operators
 
-import flow.operators.*
+import flow.*
 
 fun <T> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
 
