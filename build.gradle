@@ -13,12 +13,13 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile "org.jetbrains.kotlin:kotlin-test"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.1.1"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:$coroutines_version"
     compile "io.projectreactor:reactor-core:3.2.5.RELEASE"
     compile "org.reactivestreams:reactive-streams:1.0.2"
     testCompile "org.reactivestreams:reactive-streams-tck:1.0.2"
     compile 'io.reactivex.rxjava2:rxjava:2.1.9'
+    testCompile 'org.reactivestreams:reactive-streams-examples:1.0.2'
 }
 
 compileKotlin {

@@ -1,11 +1,14 @@
 package tck
 
-import kotlinx.coroutines.*
-import org.reactivestreams.*
 import flow.*
 import flow.operators.*
+import kotlinx.coroutines.*
+import org.reactivestreams.*
 import java.util.concurrent.atomic.*
 
+/**
+ * Adapter that transforms [Flow] into TCK-complaint [Publisher].
+ */
 @Suppress("PublisherImplementation")
 class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
@@ -17,7 +20,7 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
         @Volatile
         internal var canceled: Boolean = false
         private val requested = AtomicLong(0L)
-        private lateinit var producer: CancellableContinuation<Unit>
+        private val producer: AtomicReference<CancellableContinuation<Unit>?> = AtomicReference()
 
         // This is actually optimizable
         private var job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
@@ -25,13 +28,12 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
                 if (requested.get() == 0L) {
                     suspendCancellableCoroutine<Unit> {
-                        producer = it
+                        producer.set(it)
                         if (requested.get() != 0L) it.resumeWith(Result.success(Unit))
                     }
                 }
 
                 requested.decrementAndGet()
-
                 val result = kotlin.runCatching {
                     subscriber.onNext(value)
                 }
@@ -67,10 +69,12 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
             } while (!requested.compareAndSet(snapshot, newValue))
 
-            // Uhm, obvious candidate to rewriting
-            val token = producer.tryResume(Unit)
+            val prev = producer.get()
+            if (prev == null || !producer.compareAndSet(prev, null)) return
+
+            val token = prev.tryResume(Unit)
             if (token != null) {
-                producer.completeResume(token)
+                prev.completeResume(token)
             }
         }
     }
