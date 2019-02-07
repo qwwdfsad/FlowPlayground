@@ -1,6 +1,7 @@
 package flow.operators
 
 import flow.*
+import flow.source.*
 
 fun <T> Flow<Flow<T>>.concat(): Flow<T> = flow {
     flowBridge {

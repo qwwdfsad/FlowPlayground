@@ -3,6 +3,7 @@
 package flow.operators
 
 import flow.*
+import flow.source.*
 
 // TODO this one should be inline for performance
 suspend fun <T> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =

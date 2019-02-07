@@ -1,6 +1,7 @@
-package flow
+package flow.operators
 
-import flow.operators.*
+import flow.*
+import flow.source.*
 import io.reactivex.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
@@ -21,7 +22,7 @@ suspend fun main2() {
 }
 
 fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
-    GlobalScope.launch(coroutineContext) {
+    withContext(coroutineContext) {
         // TODO exception
         flowBridge {
             push(it)
@@ -29,20 +30,24 @@ fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T>
     }
 }
 
-fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> = flow {
-    val channel = Channel<T>(bufferSize)
+fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
+    flow {
+        val channel = Channel<T>(bufferSize)
 
-    val job = GlobalScope.launch(coroutineContext) {
-        for (element in channel) {
-            // TODO exception
-            push(element)
+        val job = GlobalScope.launch(coroutineContext) {
+            for (element in channel) {
+                // TODO exception
+                push(element)
+            }
         }
-    }
 
-    flowBridge {
-        channel.send(it)
+        flowBridge {
+            channel.send(it)
+        }
+
+        channel.close()
+        job.join()
     }
-}
 
 suspend fun main() {
     val computation = { println("Computing in $t"); 42 }
@@ -63,6 +68,7 @@ suspend fun main() {
         }
         .withDownstreamContext(downstreamContext)
         .flowBridge {
+            error("f")
             println("Consuming in $t")
         }
 

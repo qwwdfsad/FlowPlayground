@@ -1,7 +1,8 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package flow
+package flow.terminal
 
+import flow.*
 import flow.operators.*
 import java.util.*
 
@@ -57,4 +58,23 @@ suspend inline fun <T> Flow<T>.first(crossinline predicate: suspend (T) -> Boole
 
     if (consumed) throw NoSuchElementException("Flow contains no element matching the predicate")
     return result as T
+}
+
+@PublishedApi
+internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)
+
+suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
+    flowBridge { value ->
+        destination.add(value)
+    }
+    return destination
+}
+
+suspend inline fun <T> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean = try {
+    flowBridge { value ->
+        if (!action(value)) throw FlowConsumerAborted
+    }
+    true
+} catch (e: FlowConsumerAborted) {
+    false
 }

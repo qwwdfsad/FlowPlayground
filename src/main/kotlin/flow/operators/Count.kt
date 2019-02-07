@@ -1,6 +1,7 @@
 package flow.operators
 
 import flow.*
+import flow.source.*
 
 fun <T> Flow<T>.count(): Flow<Long> = flow {
     var i = 0L

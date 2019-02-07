@@ -1,6 +1,7 @@
 package flow.operators
 
 import flow.*
+import flow.source.*
 
 fun <T> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
 
