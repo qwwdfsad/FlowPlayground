@@ -41,12 +41,14 @@ fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, buffer
             }
         }
 
-        flowBridge {
-            channel.send(it)
+        try {
+            flowBridge {
+                channel.send(it)
+            }
+        } finally {
+            channel.close()
+            job.join()
         }
-
-        channel.close()
-        job.join()
     }
 
 suspend fun main() {
