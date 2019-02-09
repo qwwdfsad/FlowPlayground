@@ -1,4 +1,4 @@
-package tck
+package reactivestreams
 
 import flow.*
 import flow.operators.*
@@ -6,13 +6,16 @@ import kotlinx.coroutines.*
 import org.reactivestreams.*
 import java.util.concurrent.atomic.*
 
+fun <T> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
+
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  */
 @Suppress("PublisherImplementation")
-class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
+private class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
-    override fun subscribe(subscriber: Subscriber<in T>) {
+    override fun subscribe(subscriber: Subscriber<in T>?) {
+        if (subscriber == null) throw NullPointerException()
         subscriber.onSubscribe(FlowSubscription(flow, subscriber))
     }
 
@@ -24,12 +27,28 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
 
         // This is actually optimizable
         private var job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+            try {
+                consumeFlow()
+                subscriber.onComplete()
+            } catch (e: Throwable) {
+                // Failed with real exception
+                if (!coroutineContext[Job]!!.isCancelled) {
+                    subscriber.onError(e)
+                }
+            }
+        }
+
+        private suspend fun CoroutineScope.consumeFlow() {
             flow.flowBridge { value ->
+                if (!isActive) {
+                    subscriber.onComplete()
+                    yield() // Force cancellation
+                }
 
                 if (requested.get() == 0L) {
                     suspendCancellableCoroutine<Unit> {
                         producer.set(it)
-                        if (requested.get() != 0L) it.resumeWith(Result.success(Unit))
+                        if (requested.get() != 0L) it.resumeSafely()
                     }
                 }
 
@@ -42,8 +61,6 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
                     subscriber.onError(result.exceptionOrNull())
                 }
             }
-
-            subscriber.onComplete()
         }
 
         override fun cancel() {
@@ -51,7 +68,6 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
             job.cancel()
         }
 
-        @UseExperimental(InternalCoroutinesApi::class)
         override fun request(n: Long) {
             if (n <= 0) {
                 return
@@ -65,16 +81,21 @@ class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
             do {
                 snapshot = requested.get()
                 newValue = snapshot + n
-                if (newValue < 0L) newValue = Long.MAX_VALUE
+                if (newValue <= 0L) newValue = Long.MAX_VALUE
 
             } while (!requested.compareAndSet(snapshot, newValue))
 
             val prev = producer.get()
             if (prev == null || !producer.compareAndSet(prev, null)) return
 
-            val token = prev.tryResume(Unit)
+            prev.resumeSafely()
+        }
+
+        @UseExperimental(InternalCoroutinesApi::class)
+        private fun CancellableContinuation<Unit>.resumeSafely() {
+            val token = tryResume(Unit)
             if (token != null) {
-                prev.completeResume(token)
+                completeResume(token)
             }
         }
     }
