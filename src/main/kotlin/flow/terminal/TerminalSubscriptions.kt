@@ -8,12 +8,12 @@ import kotlin.coroutines.*
 fun <T> Flow<T>.consumeOn(
     context: CoroutineContext,
     action: suspend (T) -> Unit
-): Job = consumeOn(context, {}, {}, action)
+): Job = consumeOn(context, { throw it }, {}, action)
 
 fun <T> Flow<T>.consumeOn(
     context: CoroutineContext,
-    action: suspend (T) -> Unit,
-    onException: (Throwable) -> Unit
+    onException: (Throwable) -> Unit,
+    action: suspend (T) -> Unit
 ): Job = consumeOn(context, onException, {}, action)
 
 fun <T> Flow<T>.consumeOn(
