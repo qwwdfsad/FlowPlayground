@@ -11,7 +11,6 @@ suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
         override suspend fun push(value: T) = action(value)
     })
 
-
 inline fun <T : Any> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     flowBridge { value ->
         if (predicate(value)) push(value)

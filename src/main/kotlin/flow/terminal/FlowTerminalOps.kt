@@ -36,32 +36,37 @@ suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: 
 
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
+internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)
+
+private suspend inline fun <T : Any> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean =
+    try {
+        flowBridge { value ->
+            if (!action(value)) throw FlowConsumerAborted
+        }
+        true
+    } catch (e: FlowConsumerAborted) {
+        false
+    }
 
 suspend fun <T : Any> Flow<T>.first(): T {
     var result: T? = null
-    consumeEachWhile { value ->
+    val consumed = consumeEachWhile { value ->
         result = value
         false
     }
-    return result ?: throw NoSuchElementException("Flow is empty")
-}
-
-suspend inline fun <T : Any> Flow<T>.first(crossinline predicate: suspend (T) -> Boolean): T {
-    var result: T? = null
-    val consumed = consumeEachWhile { value ->
-        if (predicate(value)) {
-            result = value
-            false
-        } else
-            true
-    }
-
-    if (consumed) throw NoSuchElementException("Flow contains no element matching the predicate")
+    if (consumed) throw NoSuchElementException("Flow is empty")
     return result as T
 }
 
-@PublishedApi
-internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)
+suspend fun <T : Any> Flow<T>.last(): T {
+    var lastValue: T? = null
+    flowBridge { value ->
+        lastValue = value
+    }
+
+    if (lastValue == null) throw NoSuchElementException("Flow is empty")
+    return lastValue!!
+}
 
 suspend fun <T : Any, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
     flowBridge { value ->
@@ -70,11 +75,3 @@ suspend fun <T : Any, C : MutableCollection<in T>> Flow<T>.toCollection(destinat
     return destination
 }
 
-suspend inline fun <T : Any> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean = try {
-    flowBridge { value ->
-        if (!action(value)) throw FlowConsumerAborted
-    }
-    true
-} catch (e: FlowConsumerAborted) {
-    false
-}
