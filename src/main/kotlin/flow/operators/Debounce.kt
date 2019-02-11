@@ -6,7 +6,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
-fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = flow {
+fun <T : Any> Flow<T>.debounce(timeoutMillis: Long): Flow<T> = flow {
     val conflated = Channel<T>(Channel.CONFLATED)
     val job = GlobalScope.async(coroutineContext) {
         var lastReceived: T? = null

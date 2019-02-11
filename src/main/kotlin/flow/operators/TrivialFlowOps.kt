@@ -6,39 +6,39 @@ import flow.*
 import flow.source.*
 
 // TODO this one should be inline for performance
-suspend fun <T> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
+suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
     subscribe(object : FlowSubscriber<T> {
         override suspend fun push(value: T) = action(value)
     })
 
 
-inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
+inline fun <T : Any> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = flow {
     flowBridge { value ->
         if (predicate(value)) push(value)
     }
 }
 
-inline fun <T, R> Flow<T>.map(crossinline transform: suspend (T) -> R): Flow<R> = flow {
+inline fun <T : Any, R : Any> Flow<T>.map(crossinline transform: suspend (T) -> R): Flow<R> = flow {
     flowBridge { value ->
         push(transform(value))
     }
 }
 
-fun <T> Flow<T>.delay(millis: Long): Flow<T> = flow {
+fun <T : Any> Flow<T>.delay(millis: Long): Flow<T> = flow {
     kotlinx.coroutines.delay(millis)
     flowBridge {
         push(it)
     }
 }
 
-fun <T> Flow<T>.delayEach(millis: Long): Flow<T> = flow {
+fun <T : Any> Flow<T>.delayEach(millis: Long): Flow<T> = flow {
     flowBridge {
         kotlinx.coroutines.delay(millis)
         push(it)
     }
 }
 
-fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = flow {
+fun <T : Any> Flow<T>.distinctUntilChanged(): Flow<T> = flow {
     var previous: T? = null
     flowBridge {
         if (previous != it) {

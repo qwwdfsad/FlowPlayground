@@ -7,11 +7,11 @@ import flow.operators.*
 import java.util.*
 
 
-suspend fun <T> Flow<T>.toList(): List<T> = toCollection(ArrayList())
+suspend fun <T : Any> Flow<T>.toList(): List<T> = toCollection(ArrayList())
 
-suspend fun <T> Flow<T>.toSet(): Set<T> = toCollection(LinkedHashSet())
+suspend fun <T : Any> Flow<T>.toSet(): Set<T> = toCollection(LinkedHashSet())
 
-suspend inline fun <S, T : S> Flow<T>.reduce(crossinline operation: suspend (acc: S, value: T) -> S): S {
+suspend inline fun <S: Any, T: S> Flow<T>.reduce(crossinline operation: suspend (acc: S, value: T) -> S): S {
     var found = false
     var accumulator: S? = null
     flowBridge { value ->
@@ -26,7 +26,7 @@ suspend inline fun <S, T : S> Flow<T>.reduce(crossinline operation: suspend (acc
     return accumulator as S
 }
 
-suspend inline fun <T, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
+suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
     var accumulator = initial
     flowBridge { value ->
         accumulator = operation(accumulator, value)
@@ -37,7 +37,7 @@ suspend inline fun <T, R> Flow<T>.fold(initial: R, crossinline operation: suspen
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
 
-suspend fun <T> Flow<T>.first(): T {
+suspend fun <T : Any> Flow<T>.first(): T {
     var result: T? = null
     consumeEachWhile { value ->
         result = value
@@ -46,7 +46,7 @@ suspend fun <T> Flow<T>.first(): T {
     return result ?: throw NoSuchElementException("Flow is empty")
 }
 
-suspend inline fun <T> Flow<T>.first(crossinline predicate: suspend (T) -> Boolean): T {
+suspend inline fun <T : Any> Flow<T>.first(crossinline predicate: suspend (T) -> Boolean): T {
     var result: T? = null
     val consumed = consumeEachWhile { value ->
         if (predicate(value)) {
@@ -63,14 +63,14 @@ suspend inline fun <T> Flow<T>.first(crossinline predicate: suspend (T) -> Boole
 @PublishedApi
 internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)
 
-suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
+suspend fun <T : Any, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
     flowBridge { value ->
         destination.add(value)
     }
     return destination
 }
 
-suspend inline fun <T> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean = try {
+suspend inline fun <T : Any> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean = try {
     flowBridge { value ->
         if (!action(value)) throw FlowConsumerAborted
     }

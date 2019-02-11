@@ -6,20 +6,20 @@ import kotlinx.coroutines.*
 import org.reactivestreams.*
 import java.util.concurrent.atomic.*
 
-fun <T> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
+fun <T: Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  */
 @Suppress("PublisherImplementation")
-private class FlowAsPublisher<T>(private val flow: Flow<T>) : Publisher<T> {
+private class FlowAsPublisher<T: Any>(private val flow: Flow<T>) : Publisher<T> {
 
     override fun subscribe(subscriber: Subscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
         subscriber.onSubscribe(FlowSubscription(flow, subscriber))
     }
 
-    private class FlowSubscription<T>(val flow: Flow<T>, val subscriber: Subscriber<in T>) : Subscription {
+    private class FlowSubscription<T: Any>(val flow: Flow<T>, val subscriber: Subscriber<in T>) : Subscription {
         @Volatile
         internal var canceled: Boolean = false
         private val requested = AtomicLong(0L)

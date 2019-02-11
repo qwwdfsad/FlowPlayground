@@ -67,7 +67,7 @@ object ApiInstance : CallbackBasedApi {
 }
 
 val consumptionContext = newSingleThreadContext("Consumer")
-suspend fun main() {
+fun main() {
     val flow = ApiInstance.flow()
         .map { it + 1 }
         .withDownstreamContext(consumptionContext)
@@ -75,5 +75,5 @@ suspend fun main() {
     println("Flow prepared")
     flow.consumeOn(consumptionContext) {
         println("Received $it on thread ${Thread.currentThread()}")
-    }.join()
+    }
 }

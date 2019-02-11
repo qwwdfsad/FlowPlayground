@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 
-fun <T, R> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> = flow {
+fun <T : Any, R : Any> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> = flow {
     // Let's try to leverage the fact that flatMap is never contended
     val flatMap = FlatMapFlow(this)
     val root = CompletableDeferred<Unit>()

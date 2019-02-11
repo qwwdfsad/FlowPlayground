@@ -5,18 +5,18 @@ import flow.operators.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-fun <T> Flow<T>.consumeOn(
+fun <T: Any> Flow<T>.consumeOn(
     context: CoroutineContext,
     action: suspend (T) -> Unit
 ): Job = consumeOn(context, { throw it }, {}, action)
 
-fun <T> Flow<T>.consumeOn(
+fun <T: Any> Flow<T>.consumeOn(
     context: CoroutineContext,
     onException: (Throwable) -> Unit,
     action: suspend (T) -> Unit
 ): Job = consumeOn(context, onException, {}, action)
 
-fun <T> Flow<T>.consumeOn(
+fun <T: Any> Flow<T>.consumeOn(
     context: CoroutineContext, onException: (Throwable) -> Unit,
     onComplete: () -> Unit, action: suspend (T) -> Unit
 ): Job {

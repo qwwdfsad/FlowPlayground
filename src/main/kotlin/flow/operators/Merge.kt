@@ -3,7 +3,7 @@ package flow.operators
 import flow.*
 import flow.source.*
 
-fun <T> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
+fun <T: Any> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
 
 suspend fun main() {
     val f1 = flow(1, 2, 3, 4, 5).delayEach(100)

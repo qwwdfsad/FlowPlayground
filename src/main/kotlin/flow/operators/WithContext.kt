@@ -21,7 +21,7 @@ suspend fun main2() {
     }
 }
 
-fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
+fun <T : Any> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
     withContext(coroutineContext) {
         // TODO exception
         flowBridge {
@@ -30,7 +30,7 @@ fun <T> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T>
     }
 }
 
-fun <T> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
+fun <T : Any> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
     flow {
         val channel = Channel<T>(bufferSize)
 

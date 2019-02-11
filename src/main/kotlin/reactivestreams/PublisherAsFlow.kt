@@ -1,28 +1,35 @@
 package reactivestreams
 
 import flow.*
-import flow.operators.*
-import io.reactivex.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.reactivestreams.*
-import kotlin.coroutines.*
 
-fun <T> Publisher<T>.asFlow(): Flow<T> = PublisherAsFlow(this)
-var i = 0
-private class PublisherAsFlow<T>(private val publisher: Publisher<T>) : Flow<T> {
+/**
+ * Transforms the given reactive [Publisher] into [Flow].
+ * Backpressure is controlled by [batchSize] parameter that controls the size of in-flight elements
+ * and [Subscription.request] size.
+ *
+ * TODO cancellation is not propagated
+ */
+public fun <T: Any> Publisher<T>.asFlow(batchSize: Int = 1): Flow<T> = PublisherAsFlow(this, batchSize)
+
+private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, private val batchSize: Int) : Flow<T> {
 
     override suspend fun subscribe(consumer: FlowSubscriber<T>) {
-        val channel = Channel<T>(1)
-        val subscriber = ReactiveSubscriber(channel)
+        val channel = Channel<T>(batchSize)
+        val subscriber = ReactiveSubscriber(channel, batchSize)
         publisher.subscribe(subscriber)
+        var consumed = 0
         for (i in channel) {
             consumer.push(i)
-            subscriber.subscription.request(1)
+            if (++consumed == batchSize) {
+                consumed = 0
+                subscriber.subscription.request(batchSize.toLong())
+            }
         }
     }
 
-    private class ReactiveSubscriber<T>(private val channel: Channel<T>) : Subscriber<T> {
+    private class ReactiveSubscriber<T>(private val channel: Channel<T>, private val batchSize: Int) : Subscriber<T> {
 
         lateinit var subscription: Subscription
 
@@ -32,7 +39,7 @@ private class PublisherAsFlow<T>(private val publisher: Publisher<T>) : Flow<T> 
 
         override fun onSubscribe(s: Subscription) {
             subscription = s
-            s.request(1)
+            s.request(batchSize.toLong())
         }
 
         override fun onNext(t: T) {
