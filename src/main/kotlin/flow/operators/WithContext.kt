@@ -36,8 +36,11 @@ fun <T : Any> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, 
 
         val job = GlobalScope.launch(coroutineContext) {
             for (element in channel) {
-                // TODO exception
-                push(element)
+               try {
+                   push(element)
+               } catch (e: Throwable) {
+                   channel.close(e)
+               }
             }
         }
 

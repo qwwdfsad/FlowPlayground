@@ -21,7 +21,6 @@ interface Callback {
     fun onExceptionFromExternalApi(throwable: Throwable)
 }
 
-
 fun CallbackBasedApi.flow(): Flow<Int> {
     return flow {
         val channel = Channel<Int>()
@@ -66,7 +65,7 @@ object ApiInstance : CallbackBasedApi {
     }
 }
 
-val consumptionContext = newSingleThreadContext("Consumer")
+private val consumptionContext = newSingleThreadContext("Consumer")
 fun main() {
     val flow = ApiInstance.flow()
         .map { it + 1 }

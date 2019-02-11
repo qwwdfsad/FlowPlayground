@@ -5,6 +5,7 @@ package flow.terminal
 import flow.*
 import flow.operators.*
 import java.util.*
+import java.util.concurrent.*
 
 
 suspend fun <T : Any> Flow<T>.toList(): List<T> = toCollection(ArrayList())
@@ -36,12 +37,18 @@ suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: 
 
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
-internal object FlowConsumerAborted : Throwable("Flow consumer aborted", null, false, false)
+// TODO should be cancellation exception
+internal class FlowConsumerAborted : CancellationException("Flow consumer aborted") {
+    // TODO provide a non-suppressable ctor argument
+    override fun fillInStackTrace(): Throwable {
+        return this
+    }
+}
 
 private suspend inline fun <T : Any> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean =
     try {
         flowBridge { value ->
-            if (!action(value)) throw FlowConsumerAborted
+            if (!action(value)) throw FlowConsumerAborted()
         }
         true
     } catch (e: FlowConsumerAborted) {

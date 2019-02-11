@@ -10,8 +10,11 @@ fun <T : Any> Flow<T>.limit(count: Int): Flow<T> = flow {
     var consumed = 0
     try {
         flowBridge { value ->
-            if (++consumed > count) throw FlowConsumerAborted
             push(value)
+
+            if (++consumed == count) {
+                throw FlowConsumerAborted()
+            }
         }
     } catch (e: FlowConsumerAborted) {
         // Do nothing
