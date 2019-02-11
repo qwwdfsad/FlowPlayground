@@ -12,7 +12,7 @@ fun <T: Any> Flow<T>.count(): Flow<Long> = flow {
 }
 
 suspend fun main() {
-    println("Example 1: ${ runCatching { example1() }}")
+    println("Example 1: ${ runCatching { throwingProducer() }}")
     println("Example 2: ${ runCatching { example2() }}")
 }
 
@@ -29,7 +29,7 @@ private suspend fun example2() {
 }
 
 
-private suspend fun example1() {
+private suspend fun throwingProducer() {
     flow(1, 2, 3, 4).delayEach(100).count().flowBridge {
         println("$it elements")
     }

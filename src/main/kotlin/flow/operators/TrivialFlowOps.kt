@@ -6,7 +6,7 @@ import flow.*
 import flow.source.*
 
 // TODO this one should be inline for performance after all crossinline fixes and tests coverage
-suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
+suspend inline fun <T : Any> Flow<T>.flowBridge(crossinline action: suspend (T) -> Unit): Unit =
     subscribe(object : FlowSubscriber<T> {
         override suspend fun push(value: T) = action(value)
     })
