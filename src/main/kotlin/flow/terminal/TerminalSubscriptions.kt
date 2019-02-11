@@ -16,6 +16,7 @@ fun <T: Any> Flow<T>.consumeOn(
             onComplete()
         } catch (e: Throwable) {
             onException(e)
+            coroutineContext.cancel()
         }
     }
 }

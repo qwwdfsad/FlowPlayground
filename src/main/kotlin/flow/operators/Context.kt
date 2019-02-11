@@ -2,6 +2,7 @@ package flow.operators
 
 import flow.*
 import flow.source.*
+import flow.terminal.*
 import io.reactivex.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
@@ -23,34 +24,34 @@ suspend fun main2() {
 
 fun <T : Any> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
     withContext(coroutineContext) {
-        // TODO exception
         flowBridge {
             push(it)
         }
     }
 }
 
-fun <T : Any> Flow<T>.withDownstreamContext(coroutineContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
+public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
     flow {
         val channel = Channel<T>(bufferSize)
 
-        val job = GlobalScope.launch(coroutineContext) {
-            for (element in channel) {
-               try {
-                   push(element)
-               } catch (e: Throwable) {
-                   channel.close(e)
-               }
+        coroutineScope {
+            launch(downstreamContext) {
+                for (element in channel) {
+                    try {
+                        push(element)
+                    } catch (e: Throwable) {
+                        channel.close(e)
+                    }
+                }
             }
-        }
 
-        try {
-            flowBridge {
-                channel.send(it)
+            try {
+                flowBridge {
+                    channel.send(it)
+                }
+            } finally {
+                channel.close()
             }
-        } finally {
-            channel.close()
-            job.join()
         }
     }
 
@@ -60,7 +61,7 @@ suspend fun main() {
     val intermediateContext = newSingleThreadContext("Intermediate context")
     val downstreamContext = newSingleThreadContext("Downstream context")
 
-    computation.flow()
+    val j = computation.flow()
         .filter {
             println("Filtering in $t")
             true
@@ -70,16 +71,12 @@ suspend fun main() {
         .map {
             println("Mapping in $t")
             it
-        }
-        .withDownstreamContext(downstreamContext)
-        .flowBridge {
-            error("f")
+        }.consumeOn(downstreamContext) {
             println("Consuming in $t")
+            error("f")
         }
 
-    delay(1000)
-    println("It's over")
-    System.exit(-1)
+    j.join()
 }
 
 private fun rxExample() {

@@ -6,7 +6,6 @@ import flow.*
 import flow.source.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
 import kotlin.experimental.*
 
 /**
@@ -23,17 +22,16 @@ public interface FlowSink<T : Any> {
             backpressure: BackpressureStrategy = BackpressureStrategy.BLOCK,
             block: suspend (FlowSink<T>) -> Unit
         ): Flow<T> = flow {
-            val sink = FlowSinkImpl<T>(backpressure)
-            GlobalScope.launch(coroutineContext) {
-                block(sink)
-            }
+            coroutineScope {
+                val sink = FlowSinkImpl<T>(backpressure)
+                launch {
+                    block(sink)
+                }
 
-            try {
                 for (element in sink.channel) {
                     push(element)
                 }
-            } catch (e: CancellationException) {
-                sink.channel.cancel()
+
             }
         }
     }
