@@ -32,7 +32,7 @@ private suspend fun throwingProducer() {
         .withUpstreamContext(newSingleThreadContext("upstream ctx 1"))
         .map { it }
         .withUpstreamContext(newSingleThreadContext("upstream ctx 2"))
-        .consumeOn(newSingleThreadContext("downstream ctx 1"), onException = { it.printStackTrace() }) {
+        .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
             println("You will see me once")
         }.join()
 }
@@ -42,7 +42,7 @@ private suspend fun throwingOperator() {
         .withUpstreamContext(newSingleThreadContext("upstream ctx 1"))
         .map { error("foo"); it }
         .withUpstreamContext(newSingleThreadContext("upstream ctx 2"))
-        .consumeOn(newSingleThreadContext("downstream ctx 1"), onException = { it.printStackTrace() }) {
+        .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
             println("You will never see me")
         }.join()
 }

@@ -73,7 +73,7 @@ class FlowSinkTest {
         var exception: Throwable? = null
         val job = flow
             .filter { it > 10 }
-            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onException = { exception = it }) {
+            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onError = { exception = it }) {
                 if (it == 11) {
                     ++receivedConsensus
                 } else {
@@ -113,7 +113,7 @@ class FlowSinkTest {
         var isDone = false
         var exception: Throwable? = null
         val job = flow
-            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onException = { exception = it }) {
+            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onError = { exception = it }) {
                 ++received
             }
 
