@@ -37,7 +37,6 @@ suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: 
 
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
-// TODO should be cancellation exception
 internal class FlowConsumerAborted : CancellationException("Flow consumer aborted") {
     // TODO provide a non-suppressable ctor argument
     override fun fillInStackTrace(): Throwable {

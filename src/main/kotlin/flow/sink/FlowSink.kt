@@ -31,7 +31,6 @@ public interface FlowSink<T : Any> {
                 for (element in sink.channel) {
                     push(element)
                 }
-
             }
         }
     }
@@ -53,14 +52,19 @@ public enum class BackpressureStrategy {
     BUFFER
 }
 
-private class FlowSinkImpl<T : Any>(backpressure: BackpressureStrategy) : FlowSink<T> {
+private class FlowSinkImpl<T : Any>(private val backpressure: BackpressureStrategy) :
+    FlowSink<T> {
 
     @JvmField
     internal val channel = Channel<T>()
 
     override fun onNext(element: T) {
         // TODO switch mode
-        channel.sendBlocking(element)
+        try {
+            channel.sendBlocking(element)
+        } catch (e: CancellationException) {
+            // Do nothing, items emitted after cancellation are ignored
+        }
     }
 
     override fun onException(throwable: Throwable) {

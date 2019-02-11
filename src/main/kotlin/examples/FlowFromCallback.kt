@@ -2,15 +2,12 @@ package examples
 
 import flow.*
 import flow.operators.*
-import flow.source.*
+import flow.sink.*
 import flow.terminal.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.debug.*
 import kotlin.concurrent.*
 
-/**
- *
- */
 interface CallbackBasedApi {
     fun register(callback: Callback)
     fun unregister(callback: Callback)
@@ -21,58 +18,60 @@ interface Callback {
     fun onExceptionFromExternalApi(throwable: Throwable)
 }
 
-fun CallbackBasedApi.flow(): Flow<Int> {
-    return flow {
-        val channel = Channel<Int>()
-        val callback = FlowAdapterCallback(channel)
-        register(FlowAdapterCallback(channel))
-
-        try {
-            for (i in channel) {
-                push(i)
-            }
-        } finally {
-            unregister(callback)
-        }
+fun CallbackBasedApi.flow(): Flow<Int> = FlowSink.create { sink ->
+    val adapter = FlowSinkAdapter(sink)
+    register(adapter)
+    try {
+        sink.join() // Semantics of join --
+    } finally {
+        unregister(adapter)
     }
 }
 
-private class FlowAdapterCallback(private val channel: Channel<Int>) : Callback {
+private class FlowSinkAdapter(private val sink: FlowSink<Int>) : Callback {
 
     override fun onNextEventFromExternalApi(event: Int) {
-        channel.sendBlocking(event)
+        sink.onNext(event)
     }
 
     override fun onExceptionFromExternalApi(throwable: Throwable) {
-        channel.close(throwable)
+        sink.onException(throwable)
     }
 }
 
-object ApiInstance : CallbackBasedApi {
+object InfiniteApiInstance : CallbackBasedApi {
+
+    @Volatile
+    private var unregistered = false
+
     override fun register(callback: Callback) {
         println("Callback ${callback.javaClass.name} successfully registered")
         thread {
-            Thread.sleep(100)
-            callback.onNextEventFromExternalApi(1)
-            Thread.sleep(100)
-            callback.onNextEventFromExternalApi(2)
-            callback.onExceptionFromExternalApi(Throwable("External API failed"))
+            var i = 0
+            while (!unregistered) {
+                Thread.sleep(100)
+                callback.onNextEventFromExternalApi(++i)
+            }
         }
     }
 
     override fun unregister(callback: Callback) {
+        unregistered = true
         println("Callback ${callback.javaClass.name} successfully unregistered")
     }
 }
 
-private val consumptionContext = newSingleThreadContext("Consumer")
 fun main() {
-    val flow = ApiInstance.flow()
-        .map { it + 1 }
+    val consumptionContext = newSingleThreadContext("Consumer")
+    val flow = InfiniteApiInstance.flow()
+        .map { it }
         .withDownstreamContext(consumptionContext)
 
     println("Flow prepared")
-    flow.consumeOn(consumptionContext) {
-        println("Received $it on thread ${Thread.currentThread()}")
-    }
+    var elements = 0
+    flow.limit(10)
+        .consumeOn(consumptionContext) {
+            println("Received $it on thread ${Thread.currentThread()}")
+            if (++elements > 5) throw CancellationException()
+        }
 }
