@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.operators.*
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 
 fun <T : Any> BroadcastChannel<T>.asFlow() = flow<T> {

@@ -3,7 +3,7 @@
 package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 
 // TODO this one should be inline for performance after all crossinline fixes and tests coverage
 suspend inline fun <T : Any> Flow<T>.flowBridge(crossinline action: suspend (T) -> Unit): Unit =

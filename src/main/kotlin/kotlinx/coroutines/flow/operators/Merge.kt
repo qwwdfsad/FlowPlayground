@@ -1,7 +1,7 @@
 package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 
 fun <T: Any> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
 

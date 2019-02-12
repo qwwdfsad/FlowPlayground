@@ -5,7 +5,7 @@ import org.junit.*
 import org.reactivestreams.*
 import org.reactivestreams.tck.*
 
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 import java.util.stream.*
 import org.reactivestreams.Subscription
 import org.reactivestreams.Subscriber

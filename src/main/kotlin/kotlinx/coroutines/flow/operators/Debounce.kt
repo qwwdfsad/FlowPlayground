@@ -3,7 +3,7 @@ package kotlinx.coroutines.flow.operators
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 

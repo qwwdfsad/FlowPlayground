@@ -1,7 +1,7 @@
 package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.builders.*
 
 fun <T: Any> Flow<Flow<T>>.concat(): Flow<T> =
     flow {
