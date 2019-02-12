@@ -28,8 +28,13 @@ public interface FlowSink<T : Any> {
                     block(sink)
                 }
 
-                for (element in sink.channel) {
-                    push(element)
+                // TODO consumeEach on channel?
+                try {
+                    for (element in sink.channel) {
+                        push(element)
+                    }
+                } finally {
+                    sink.channel.cancel()
                 }
             }
         }
