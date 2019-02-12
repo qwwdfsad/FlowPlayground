@@ -5,7 +5,6 @@ import flow.operators.*
 import flow.sink.*
 import flow.terminal.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
 import kotlin.concurrent.*
 
 interface CallbackBasedApi {
@@ -70,8 +69,8 @@ fun main() {
     println("Flow prepared")
     var elements = 0
     flow.limit(10)
-        .consumeOn(consumptionContext) {
+        .consumeOn(consumptionContext + CoroutineExceptionHandler { _, t -> println("Handling $t") }) {
             println("Received $it on thread ${Thread.currentThread()}")
-            if (++elements > 5) throw CancellationException()
+            if (++elements > 5) throw RuntimeException()
         }
 }
