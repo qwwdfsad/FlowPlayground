@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class FlowContextUpstreamTest : TestBase() {
@@ -21,7 +22,7 @@ class FlowContextUpstreamTest : TestBase() {
         assertEquals("ctx1", source.contextName)
         assertEquals("main", consumer.contextName)
 
-        flow.withUpstreamContext(named("ctx2")).consumeOn(coroutineContext) {
+        flow.withUpstreamContext(named("ctx2")).consumeOn(coroutineContext[ContinuationInterceptor]!!) {
             consumer.consume(it)
         }.join()
 
@@ -45,7 +46,7 @@ class FlowContextUpstreamTest : TestBase() {
             .map(mapper)
             .withUpstreamContext(named("ctx2"))
             .map(mapper)
-            .consumeOn(Dispatchers.Unconfined) {
+            .consumeOn(coroutineContext[ContinuationInterceptor]!!) {
                 consumer.consume(it)
             }.join()
 
