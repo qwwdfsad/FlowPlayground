@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 
 // TODO this one should be inline for performance after all crossinline fixes and tests coverage
-suspend inline fun <T : Any> Flow<T>.flowBridge(crossinline action: suspend (T) -> Unit): Unit =
+suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
     subscribe(object : FlowSubscriber<T> {
         override suspend fun push(value: T) = action(value)
     })
@@ -18,7 +18,7 @@ inline fun <T : Any> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolea
         }
     }
 
-inline fun <T : Any, R : Any> Flow<T>.map(crossinline transform: suspend (T) -> R): Flow<R> =
+fun <T : Any, R : Any> Flow<T>.map(transform: suspend (T) -> R): Flow<R> =
     flow {
         flowBridge { value ->
             push(transform(value))

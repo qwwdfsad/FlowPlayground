@@ -26,16 +26,14 @@ import kotlin.experimental.*
  * ```
  * TODO inline when tests are ready
  */
-@BuilderInference
-public fun <T : Any> flow(block: suspend FlowSubscriber<T>.() -> Unit) = object : Flow<T> {
+public fun <T : Any> flow(@BuilderInference block: suspend FlowSubscriber<T>.() -> Unit) = object : Flow<T> {
     override suspend fun subscribe(consumer: FlowSubscriber<T>) = consumer.block()
 }
 
 /**
  * Creates flow from a given suspendable [block] that will be executed within provided [flowContext].
  */
-@BuilderInference
-public fun <T : Any> flow(flowContext: CoroutineContext, block: suspend FlowSubscriber<T>.() -> Unit): Flow<T> =
+public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowSubscriber<T>.() -> Unit): Flow<T> =
     flow(block).withUpstreamContext(flowContext)
 
 
@@ -45,8 +43,8 @@ public fun <T : Any> flow(flowContext: CoroutineContext, block: suspend FlowSubs
 public fun <T : Any> (() -> T).flow(): Flow<T> = SuppliedFlow(this)
 
 private class SuppliedFlow<T : Any>(private val supplier: () -> T) : Flow<T> {
-    override suspend fun subscribe(subscriber: FlowSubscriber<T>) {
-        subscriber.push(supplier())
+    override suspend fun subscribe(consumer: FlowSubscriber<T>) {
+        consumer.push(supplier())
     }
 }
 

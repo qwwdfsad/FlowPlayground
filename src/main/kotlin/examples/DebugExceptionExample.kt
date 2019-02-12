@@ -40,7 +40,7 @@ private suspend fun throwingProducer() {
 private suspend fun throwingOperator() {
     generate().map { it }
         .withUpstreamContext(newSingleThreadContext("upstream ctx 1"))
-        .map { error("foo"); it }
+        .map { error("foo") }
         .withUpstreamContext(newSingleThreadContext("upstream ctx 2"))
         .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
             println("You will never see me")

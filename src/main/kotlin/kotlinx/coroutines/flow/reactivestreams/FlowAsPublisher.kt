@@ -97,7 +97,6 @@ private class FlowAsPublisher<T: Any>(private val flow: Flow<T>) : Publisher<T> 
             prev.resumeSafely()
         }
 
-        @UseExperimental(InternalCoroutinesApi::class)
         private fun CancellableContinuation<Unit>.resumeSafely() {
             val token = tryResume(Unit)
             if (token != null) {

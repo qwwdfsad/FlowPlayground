@@ -23,16 +23,18 @@ dependencies {
     testCompile 'org.reactivestreams:reactive-streams-examples:1.0.2'
 }
 
+ext.annotations = ["-Xuse-experimental=kotlin.Experimental",
+                   "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                   "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                   "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                   "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
+
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.freeCompilerArgs += [
-            "-Xuse-experimental=kotlin.Experimental",
-            "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
-            "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-            "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
+    kotlinOptions.freeCompilerArgs += annotations
 }
 
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.freeCompilerArgs += annotations
 }
