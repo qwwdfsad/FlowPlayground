@@ -1,9 +1,8 @@
-package kotlinx.coroutines.sink
+package kotlinx.coroutines.flow.sink
 
 import examples.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.operators.*
-import kotlinx.coroutines.flow.sink.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -22,7 +21,6 @@ class FlowSinkTest {
             element = it
         }
 
-        delay(100)
         future.complete(42)
         job.join()
         assertTrue(isDone)
@@ -53,7 +51,7 @@ class FlowSinkTest {
     fun testThrowingConsumer() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.onNext(++i)
+            it.next(++i)
         }
 
 
@@ -94,17 +92,14 @@ class FlowSinkTest {
     fun testThrowingSource() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.onNext(++i)
-            if (i == 5) it.onException(java.lang.RuntimeException())
+            it.next(++i)
+            if (i == 5) it.error(java.lang.RuntimeException())
         }
 
         val flow = FlowSink.create<Int> { sink ->
             api.start(sink)
-            try {
-                sink.join()
-            } finally {
-                api.stop()
-            }
+            sink.join()
+            api.stop()
         }
 
         var received = 0

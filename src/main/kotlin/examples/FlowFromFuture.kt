@@ -9,10 +9,10 @@ import java.util.concurrent.*
 fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = FlowSink.create { sink ->
     whenComplete { element, error ->
         if (error != null) {
-            sink.onException(error)
+            sink.error(error)
         } else {
-            sink.onNext(element)
-            sink.onCompleted()
+            sink.next(element)
+            sink.completed()
         }
     }
 }

@@ -20,21 +20,18 @@ interface Callback {
 fun CallbackBasedApi.flow(): Flow<Int> = FlowSink.create { sink ->
     val adapter = FlowSinkAdapter(sink)
     register(adapter)
-    try {
-        sink.join() // Semantics of join --
-    } finally {
-        unregister(adapter)
-    }
+    sink.join() // Join never throws
+    unregister(adapter)
 }
 
 private class FlowSinkAdapter(private val sink: FlowSink<Int>) : Callback {
 
     override fun onNextEventFromExternalApi(event: Int) {
-        sink.onNext(event)
+        sink.next(event)
     }
 
     override fun onExceptionFromExternalApi(throwable: Throwable) {
-        sink.onException(throwable)
+        sink.error(throwable)
     }
 }
 
