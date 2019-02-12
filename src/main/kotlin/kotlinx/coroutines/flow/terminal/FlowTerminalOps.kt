@@ -11,7 +11,7 @@ suspend fun <T : Any> Flow<T>.toList(): List<T> = toCollection(ArrayList())
 
 suspend fun <T : Any> Flow<T>.toSet(): Set<T> = toCollection(LinkedHashSet())
 
-suspend inline fun <S: Any, T: S> Flow<T>.reduce(crossinline operation: suspend (acc: S, value: T) -> S): S {
+suspend fun <S: Any, T: S> Flow<T>.reduce(operation: suspend (acc: S, value: T) -> S): S {
     var found = false
     var accumulator: S? = null
     flowBridge { value ->
@@ -26,7 +26,7 @@ suspend inline fun <S: Any, T: S> Flow<T>.reduce(crossinline operation: suspend 
     return accumulator as S
 }
 
-suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
+suspend fun <T : Any, R> Flow<T>.fold(initial: R, operation: suspend (acc: R, value: T) -> R): R {
     var accumulator = initial
     flowBridge { value ->
         accumulator = operation(accumulator, value)
@@ -43,7 +43,7 @@ internal class FlowConsumerAborted : CancellationException("Flow consumer aborte
     }
 }
 
-private suspend inline fun <T : Any> Flow<T>.consumeEachWhile(crossinline action: suspend (T) -> Boolean): Boolean =
+private suspend fun <T : Any> Flow<T>.consumeEachWhile(action: suspend (T) -> Boolean): Boolean =
     try {
         flowBridge { value ->
             if (!action(value)) throw FlowConsumerAborted()

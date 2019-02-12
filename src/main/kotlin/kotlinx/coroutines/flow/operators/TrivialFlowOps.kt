@@ -11,7 +11,7 @@ suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
         override suspend fun push(value: T) = action(value)
     })
 
-inline fun <T : Any> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> =
+fun <T : Any> Flow<T>.filter(predicate: suspend (T) -> Boolean): Flow<T> =
     flow {
         flowBridge { value ->
             if (predicate(value)) push(value)
@@ -51,9 +51,3 @@ fun <T : Any> Flow<T>.distinctUntilChanged(): Flow<T> =
             }
         }
     }
-
-suspend fun main()  {
-    listOf(1, 1, 2, 1, 3).asFlow().delay(3000).distinctUntilChanged().flowBridge {
-        println("HM: $it")
-    }
-}
