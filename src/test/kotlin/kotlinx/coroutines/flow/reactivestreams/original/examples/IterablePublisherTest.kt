@@ -1,4 +1,4 @@
-package reactivestreams.original.examples
+package kotlinx.coroutines.flow.reactivestreams.original.examples
 
 import org.reactivestreams.example.unicast.AsyncIterablePublisher
 import org.reactivestreams.Publisher

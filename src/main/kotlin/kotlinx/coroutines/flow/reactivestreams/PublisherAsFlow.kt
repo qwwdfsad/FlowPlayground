@@ -1,4 +1,4 @@
-package reactivestreams
+package kotlinx.coroutines.flow.reactivestreams
 
 import flow.*
 import kotlinx.coroutines.channels.*
@@ -9,9 +9,11 @@ import org.reactivestreams.*
  * Backpressure is controlled by [batchSize] parameter that controls the size of in-flight elements
  * and [Subscription.request] size.
  *
- * TODO cancellation is not propagated
+ * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flights elements
+ * are discarded.
  */
-public fun <T: Any> Publisher<T>.asFlow(batchSize: Int = 1): Flow<T> = PublisherAsFlow(this, batchSize)
+public fun <T: Any> Publisher<T>.asFlow(batchSize: Int = 1): Flow<T> =
+    PublisherAsFlow(this, batchSize)
 
 private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, private val batchSize: Int) : Flow<T> {
 
@@ -20,12 +22,16 @@ private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, priva
         val subscriber = ReactiveSubscriber(channel, batchSize)
         publisher.subscribe(subscriber)
         var consumed = 0
-        for (i in channel) {
-            consumer.push(i)
-            if (++consumed == batchSize) {
-                consumed = 0
-                subscriber.subscription.request(batchSize.toLong())
+        try {
+            for (i in channel) {
+                consumer.push(i)
+                if (++consumed == batchSize) {
+                    consumed = 0
+                    subscriber.subscription.request(batchSize.toLong())
+                }
             }
+        } finally {
+            subscriber.subscription.cancel()
         }
     }
 
@@ -43,7 +49,8 @@ private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, priva
         }
 
         override fun onNext(t: T) {
-            require(channel.offer(t))
+            // Controlled by batch-size
+            require(channel.offer(t)) { "Element $t was not added to channel because it was full, $channel" }
         }
 
         override fun onError(t: Throwable?) {

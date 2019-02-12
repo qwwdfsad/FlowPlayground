@@ -1,4 +1,4 @@
-package reactivestreams
+package kotlinx.coroutines.flow.reactivestreams
 
 import flow.*
 import flow.operators.*
@@ -10,13 +10,19 @@ fun <T: Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
+ * Any calls to [cancel] cancels the original flow.
  */
 @Suppress("PublisherImplementation")
 private class FlowAsPublisher<T: Any>(private val flow: Flow<T>) : Publisher<T> {
 
     override fun subscribe(subscriber: Subscriber<in T>?) {
         if (subscriber == null) throw NullPointerException()
-        subscriber.onSubscribe(FlowSubscription(flow, subscriber))
+        subscriber.onSubscribe(
+            FlowSubscription(
+                flow,
+                subscriber
+            )
+        )
     }
 
     private class FlowSubscription<T: Any>(val flow: Flow<T>, val subscriber: Subscriber<in T>) : Subscription {

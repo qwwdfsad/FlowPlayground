@@ -1,4 +1,4 @@
-package reactivestreams
+package kotlinx.coroutines.flow.reactivestreams
 
 import junit.framework.Assert.*
 import org.junit.*

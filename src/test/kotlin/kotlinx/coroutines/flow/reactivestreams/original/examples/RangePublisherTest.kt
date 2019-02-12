@@ -1,5 +1,6 @@
-package reactivestreams.original.examples
+package kotlinx.coroutines.flow.reactivestreams.original.examples
 
+import kotlinx.coroutines.flow.reactivestreams.*
 import org.junit.*
 import org.reactivestreams.*
 import org.reactivestreams.example.unicast.*
