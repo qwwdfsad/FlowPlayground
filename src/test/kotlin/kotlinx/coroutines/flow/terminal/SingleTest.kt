@@ -42,7 +42,7 @@ class SingleTest : TestBase() {
         }
 
         assertFailsWith<TestException> {
-            flow<Int> {
+            flow {
                 push(1)
                 throw TestException()
             }.awaitSingle()
