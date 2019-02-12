@@ -1,11 +1,13 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package kotlinx.coroutines.flow.reactivestreams
 
-import junit.framework.Assert.*
 import org.junit.*
 import org.reactivestreams.*
 import org.reactivestreams.tck.*
 
 import kotlinx.coroutines.flow.builders.*
+import org.junit.Assert.*
 import java.util.stream.*
 import org.reactivestreams.Subscription
 import org.reactivestreams.Subscriber
@@ -32,7 +34,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
          * Tests assume that calling "subscribe" is enough for publisher to fail and it is not
          * true for our implementation
          */
-        val pub = { error(42); 42L }.flow().asPublisher()
+        val pub = { error(42) }.flow().asPublisher()
         return Publisher { subscriber ->
             pub.subscribe(object : Subscriber<Long> by subscriber as Subscriber<Long> {
                 override fun onSubscribe(s: Subscription) {
