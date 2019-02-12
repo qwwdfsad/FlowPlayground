@@ -1,8 +1,8 @@
 package kotlinx.coroutines.flow.reactivestreams
 
-import flow.*
-import flow.operators.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
 import org.reactivestreams.*
 import java.util.concurrent.atomic.*
 

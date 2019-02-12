@@ -4,7 +4,8 @@ import junit.framework.Assert.*
 import org.junit.*
 import org.reactivestreams.*
 import org.reactivestreams.tck.*
-import flow.source.*
+
+import kotlinx.coroutines.flow.source.*
 import java.util.stream.*
 import org.reactivestreams.Subscription
 import org.reactivestreams.Subscriber

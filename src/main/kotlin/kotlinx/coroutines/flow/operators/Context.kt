@@ -1,12 +1,12 @@
-package flow.operators
+package kotlinx.coroutines.flow.operators
 
-import flow.*
-import flow.source.*
-import flow.terminal.*
 import io.reactivex.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.terminal.*
 import kotlin.coroutines.*
 
 
@@ -22,13 +22,14 @@ suspend fun main2() {
     }
 }
 
-fun <T : Any> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> = flow {
-    withContext(coroutineContext) {
-        flowBridge {
-            push(it)
+fun <T : Any> Flow<T>.withUpstreamContext(coroutineContext: CoroutineContext): Flow<T> =
+    flow {
+        withContext(coroutineContext) {
+            flowBridge {
+                push(it)
+            }
         }
     }
-}
 
 public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
     flow {
@@ -41,6 +42,7 @@ public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineC
                         push(element)
                     } catch (e: Throwable) {
                         channel.close(e)
+                        throw e // Cancel the whole hierarchy
                     }
                 }
             }

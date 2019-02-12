@@ -1,7 +1,7 @@
 package kotlinx.coroutines.flow.reactivestreams
 
-import flow.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
 
 /**
@@ -15,7 +15,8 @@ import org.reactivestreams.*
 public fun <T: Any> Publisher<T>.asFlow(batchSize: Int = 1): Flow<T> =
     PublisherAsFlow(this, batchSize)
 
-private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, private val batchSize: Int) : Flow<T> {
+private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, private val batchSize: Int) :
+    Flow<T> {
 
     override suspend fun subscribe(consumer: FlowSubscriber<T>) {
         val channel = Channel<T>(batchSize)

@@ -1,7 +1,8 @@
 package kotlinx.coroutines.flow.reactivestreams
 
-import flow.terminal.*
+
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.terminal.*
 import reactor.core.publisher.*
 import kotlin.test.*
 

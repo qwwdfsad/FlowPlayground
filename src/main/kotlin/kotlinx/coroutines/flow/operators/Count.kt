@@ -1,15 +1,16 @@
-package flow.operators
+package kotlinx.coroutines.flow.operators
 
-import flow.*
-import flow.source.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.source.*
 
-fun <T: Any> Flow<T>.count(): Flow<Long> = flow {
-    var i = 0L
-    flowBridge {
-        ++i
+fun <T: Any> Flow<T>.count(): Flow<Long> =
+    flow {
+        var i = 0L
+        flowBridge {
+            ++i
+        }
+        push(i)
     }
-    push(i)
-}
 
 suspend fun main() {
     println("Example 1: ${ runCatching { throwingProducer() }}")

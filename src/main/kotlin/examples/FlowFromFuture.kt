@@ -1,9 +1,9 @@
 package examples
 
-import flow.*
-import flow.sink.*
-import flow.terminal.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.sink.*
+import kotlinx.coroutines.flow.terminal.*
 import java.util.concurrent.*
 
 fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = FlowSink.create { sink ->

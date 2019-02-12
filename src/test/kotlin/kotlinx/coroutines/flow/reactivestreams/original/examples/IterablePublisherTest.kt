@@ -8,7 +8,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ExecutorService
 import org.reactivestreams.tck.PublisherVerification
 import org.testng.annotations.*
-import reactivestreams.*
 
 @Test // Must be here for TestNG to find and run this, do not remove
 class IterablePublisherTest : PublisherVerification<Int>(TestEnvironment()) {

@@ -1,11 +1,11 @@
 @file:UseExperimental(ExperimentalTypeInference::class)
 
-package flow.sink
+package kotlinx.coroutines.flow.sink
 
-import flow.*
-import flow.source.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.source.*
 import kotlin.experimental.*
 
 /**

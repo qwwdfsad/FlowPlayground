@@ -1,10 +1,10 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package flow.operators
+package kotlinx.coroutines.flow.operators
 
-import flow.*
-import flow.source.*
-import flow.terminal.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.terminal.*
 
 fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
     require(count > 0) { "limit count should be positive, but had $count" }

@@ -2,12 +2,11 @@ package examples
 
 import examples.IntDao.Companion.IO
 import examples.IntDao.Companion.Main
-import flow.*
-import flow.operators.*
-import flow.source.*
-import flow.terminal.*
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.terminal.*
 
 /**
  * This example shows how to create a Flow-based API for database client,
@@ -59,11 +58,12 @@ object IntDaoImpl : IntDao {
         push(42)
     }
 
-    override fun readIntWithIoConvention(key: String): Flow<Int> = flow(IO) {
-        println("Doing blocking call in thread: ${Thread.currentThread()}")
-        Thread.sleep(100)
-        push(42)
-    }
+    override fun readIntWithIoConvention(key: String): Flow<Int> =
+        flow(IO) {
+            println("Doing blocking call in thread: ${Thread.currentThread()}")
+            Thread.sleep(100)
+            push(42)
+        }
 }
 
 

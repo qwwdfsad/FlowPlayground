@@ -1,8 +1,8 @@
-package flow.terminal
+package kotlinx.coroutines.flow.terminal
 
-import flow.*
-import flow.operators.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
 import kotlin.coroutines.*
 
 // TODO should be inline but triggers BE error

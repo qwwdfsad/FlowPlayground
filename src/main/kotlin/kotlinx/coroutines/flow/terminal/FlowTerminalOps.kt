@@ -1,12 +1,11 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package flow.terminal
+package kotlinx.coroutines.flow.terminal
 
-import flow.*
-import flow.operators.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
 import java.util.*
 import java.util.concurrent.*
-
 
 suspend fun <T : Any> Flow<T>.toList(): List<T> = toCollection(ArrayList())
 

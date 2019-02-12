@@ -1,11 +1,11 @@
-package flow.channels
+package kotlinx.coroutines.flow.channels
 
-import flow.*
-import flow.operators.*
-import flow.source.*
-import flow.terminal.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.terminal.*
 
 fun <T : Any> BroadcastChannel<T>.asFlow() = flow<T> {
     val subscription = openSubscription()
@@ -13,7 +13,7 @@ fun <T : Any> BroadcastChannel<T>.asFlow() = flow<T> {
         for (element in subscription) {
             push(element)
         }
-    }  catch (e: Throwable) {
+    } catch (e: Throwable) {
         if (e is CancellationException) {
             subscription.cancel()
         } else {

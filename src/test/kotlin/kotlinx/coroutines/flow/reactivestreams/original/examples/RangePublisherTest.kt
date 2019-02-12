@@ -5,7 +5,6 @@ import org.junit.*
 import org.reactivestreams.*
 import org.reactivestreams.example.unicast.*
 import org.reactivestreams.tck.*
-import reactivestreams.*
 
 class RangePublisherTest : PublisherVerification<Int>(TestEnvironment(50, 50)) {
 

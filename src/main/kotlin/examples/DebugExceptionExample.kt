@@ -1,10 +1,10 @@
 package examples
 
-import flow.*
-import flow.operators.*
-import flow.source.*
-import flow.terminal.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.source.*
+import kotlinx.coroutines.flow.terminal.*
 
 fun eliminateTailCall() {
 

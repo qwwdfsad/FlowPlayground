@@ -1,11 +1,10 @@
 package kotlinx.coroutines.sink
 
 import examples.*
-import flow.operators.*
-import flow.sink.*
-import flow.terminal.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
+import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.sink.*
+import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.concurrent.*
@@ -49,7 +48,6 @@ class FlowSinkTest {
             stopped = true
         }
     }
-
 
     @Test
     fun testThrowingConsumer() = runBlocking {

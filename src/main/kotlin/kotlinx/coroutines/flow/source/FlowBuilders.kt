@@ -1,14 +1,15 @@
 @file:UseExperimental(ExperimentalTypeInference::class)
 
-package flow.source
+package kotlinx.coroutines.flow.source
 
-import flow.*
-import flow.operators.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
 import kotlin.coroutines.*
 import kotlin.experimental.*
 
 @BuilderInference
-fun <T : Any> flow(block: suspend FlowSubscriber<T>.() -> Unit) = object : Flow<T> {
+fun <T : Any> flow(block: suspend FlowSubscriber<T>.() -> Unit) = object :
+    Flow<T> {
     override suspend fun subscribe(consumer: FlowSubscriber<T>) = consumer.block()
 }
 
