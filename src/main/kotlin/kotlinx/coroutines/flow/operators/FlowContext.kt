@@ -59,24 +59,23 @@ public fun <T : Any> Flow<T>.withUpstreamContext(upstreamContext: CoroutineConte
 public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
     flow {
         coroutineScope {
-            val parent = coroutineContext[Job]!!
             val channel = produce<T>(capacity = bufferSize) {
-                try {
-                    flowBridge {
-                        channel.send(it)
-                    }
-                } catch (e: CancellationException) {
-                    // TODO discuss it
-                    val child = coroutineContext[Job]!!
-                    child.invokeOnCompletion(onCancelling = true) { parent.cancel() }
+                flowBridge {
+                    channel.send(it)
                 }
             }
 
             withContext(downstreamContext) {
-                // TODO investigate cancellability issues
                 for (value in channel) {
                     push(value)
                 }
+            }
+
+            // Check upstream for cancellation and **wait** for it
+            val producer = channel as Job
+            if (producer.isCancelled) {
+                producer.join()
+                throw producer.getCancellationException()
             }
         }
     }
