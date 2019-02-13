@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.sink.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.concurrent.*
 
+// Though we do not recommend to do it :)
 fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = FlowSink.create { sink ->
     whenComplete { element, error ->
         if (error != null) {

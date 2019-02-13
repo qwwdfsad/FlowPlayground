@@ -27,7 +27,7 @@ fun <T : Any, R : Any> Flow<T>.map(transform: suspend (T) -> R): Flow<R> =
         }
     }
 
-fun <T : Any> Flow<T>.delay(millis: Long): Flow<T> =
+fun <T : Any> Flow<T>.delayFlow(millis: Long): Flow<T> =
     flow {
         kotlinx.coroutines.delay(millis)
         flowBridge {

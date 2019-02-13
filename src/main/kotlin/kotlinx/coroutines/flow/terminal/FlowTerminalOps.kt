@@ -7,10 +7,6 @@ import kotlinx.coroutines.flow.operators.*
 import java.util.*
 import java.util.concurrent.*
 
-suspend fun <T : Any> Flow<T>.toList(): List<T> = toCollection(ArrayList())
-
-suspend fun <T : Any> Flow<T>.toSet(): Set<T> = toCollection(LinkedHashSet())
-
 suspend fun <S: Any, T: S> Flow<T>.reduce(operation: suspend (acc: S, value: T) -> S): S {
     var found = false
     var accumulator: S? = null
@@ -34,7 +30,6 @@ suspend fun <T : Any, R> Flow<T>.fold(initial: R, operation: suspend (acc: R, va
     return accumulator
 }
 
-suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
 internal class FlowConsumerAborted : CancellationException("Flow consumer aborted") {
     // TODO provide a non-suppressable ctor argument
@@ -42,41 +37,3 @@ internal class FlowConsumerAborted : CancellationException("Flow consumer aborte
         return this
     }
 }
-
-private suspend fun <T : Any> Flow<T>.consumeEachWhile(action: suspend (T) -> Boolean): Boolean =
-    try {
-        flowBridge { value ->
-            if (!action(value)) throw FlowConsumerAborted()
-        }
-        true
-    } catch (e: FlowConsumerAborted) {
-        false
-    }
-
-suspend fun <T : Any> Flow<T>.first(): T {
-    var result: T? = null
-    val consumed = consumeEachWhile { value ->
-        result = value
-        false
-    }
-    if (consumed) throw NoSuchElementException("Flow is empty")
-    return result as T
-}
-
-suspend fun <T : Any> Flow<T>.last(): T {
-    var lastValue: T? = null
-    flowBridge { value ->
-        lastValue = value
-    }
-
-    if (lastValue == null) throw NoSuchElementException("Flow is empty")
-    return lastValue!!
-}
-
-suspend fun <T : Any, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
-    flowBridge { value ->
-        destination.add(value)
-    }
-    return destination
-}
-

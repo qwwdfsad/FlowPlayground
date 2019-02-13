@@ -18,8 +18,8 @@ suspend fun main() {
 }
 
 private suspend fun example2() {
-    val f1 = flow(1).delay(5000).map { println("Whoa"); it }
-    val f2 = flow(2).delay(100).map {
+    val f1 = flow(1).delayFlow(5000).map { println("Whoa"); it }
+    val f2 = flow(2).delayFlow(100).map {
         error(":(")
         42
     }
