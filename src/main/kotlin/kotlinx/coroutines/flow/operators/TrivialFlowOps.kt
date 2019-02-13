@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 
 // TODO this one should be inline for performance after all crossinline fixes and tests coverage
-suspend fun <T : Any> Flow<T>.flowBridge(action: suspend (T) -> Unit): Unit =
+//@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+//@kotlin.internal.InlineOnly
+suspend inline fun <T : Any> Flow<T>.flowBridge(crossinline action: suspend (T) -> Unit): Unit =
     subscribe(object : FlowSubscriber<T> {
         override suspend fun push(value: T) = action(value)
     })

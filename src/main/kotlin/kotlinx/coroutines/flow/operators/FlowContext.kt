@@ -10,68 +10,76 @@ import kotlin.coroutines.*
 
 /**
  * Changes upstream context of the flow execution to the given [upstreamContext].
- * The rule of thumb: the context of all operators **prior** (aka upstream) to this call is changed.
+ * [upstreamContext] affects context of every operator and consumer in flow except ones
+ * that are below [withDownstreamContext].
  *
- * Such operator can be applied to [Flow] only once and all consecutive invocations of [withUpstreamContext]
+ * This operator can be applied to [Flow] only once and all consecutive invocations of [withUpstreamContext]
  * have no effect.
+ *
+ * Method throws [IllegalStateException] if [upstreamContext] contains [Job] element.
+ * It is done in order to prevent accidental mis-usage of this operator, because it effectively
+ * prevents propagation of cancellation from the downstream.
  *
  * Example:
  * ```
- * flow // <- context of the flow is changed to `foo
- *   .map {} // context of this map is changed
+ * flow // <- context of the flow is changed to foo
+ *   .map {} // context of this map is changed to foo
  *   .withUpstreamContext(foo)
- *   .map {} // context of this map is not changed
+ *   .map {} // context of this map is changed to foo as well
  * ```
  */
-public fun <T : Any> Flow<T>.withUpstreamContext(upstreamContext: CoroutineContext): Flow<T> =
-    flow {
+public fun <T : Any> Flow<T>.withUpstreamContext(upstreamContext: CoroutineContext): Flow<T> {
+    val job = upstreamContext[Job]
+    if (job != null) {
+        error("Upstream context operator should not contain job in it, but had $job")
+    }
+
+    return flow {
         withContext(upstreamContext) {
             flowBridge {
                 push(it)
             }
         }
     }
+}
 
 /**
  * Changes downstream context of the flow execution to the given [downstreamContext].
  * The rule of thumb: the context of all **subsequent** (aka downstream) operators is changed.
- * [bufferSize] controls the size of the backpressure buffer between two contexts
+ * [bufferSize] controls the size of the backpressure buffer between two contexts.
  *
  * Example:
  * ```
- * flow
+ * flow // some context
  *   .map {} // Some context
  *   .withDownstreamContext(foo)
  *   .map {} // Foo context
- *
  * ```
  */
 public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineContext, bufferSize: Int = 16): Flow<T> =
     flow {
-        val channel = Channel<T>(bufferSize)
-        // TODO fast path when dispatcher is the same
         coroutineScope {
-            launch(downstreamContext) {
-                for (element in channel) {
-                    try {
-                        push(element)
-                    } catch (e: Throwable) {
-                        channel.close(e)
-                        throw e // Kill the whole hierarchy
+            val parent = coroutineContext[Job]!!
+            val channel = produce<T>(capacity = bufferSize) {
+                try {
+                    flowBridge {
+                        channel.send(it)
                     }
+                } catch (e: CancellationException) {
+                    // TODO discuss it
+                    val child = coroutineContext[Job]!!
+                    child.invokeOnCompletion(onCancelling = true) { parent.cancel() }
                 }
             }
 
-            try {
-                flowBridge {
-                    channel.send(it)
+            withContext(downstreamContext) {
+                // TODO investigate cancellability issues
+                for (value in channel) {
+                    push(value)
                 }
-            } finally {
-                channel.close()
             }
         }
     }
-
 
 // TODO describe why we don't like this naming
 @Deprecated(level = DeprecationLevel.ERROR, message = "Use Flow.withUpstreamContext instead", replaceWith = ReplaceWith("withUpstreamContext(context)"))

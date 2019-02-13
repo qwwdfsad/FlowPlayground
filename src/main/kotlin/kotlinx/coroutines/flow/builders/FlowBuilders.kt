@@ -24,7 +24,6 @@ import kotlin.experimental.*
  *   }
  * }
  * ```
- * TODO inline when tests are ready
  */
 public fun <T : Any> flow(@BuilderInference block: suspend FlowSubscriber<T>.() -> Unit) = object : Flow<T> {
     override suspend fun subscribe(consumer: FlowSubscriber<T>) = consumer.block()
@@ -32,10 +31,11 @@ public fun <T : Any> flow(@BuilderInference block: suspend FlowSubscriber<T>.() 
 
 /**
  * Creates flow from a given suspendable [block] that will be executed within provided [flowContext].
+ * Throws [IllegalStateException] if [flowContext] contains [Job] element, all parent-child relationship
+ * and cancellation should be controlled by downstream.
  */
 public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowSubscriber<T>.() -> Unit): Flow<T> =
     flow(block).withUpstreamContext(flowContext)
-
 
 /**
  * Creates flow that produces single value from a given functional type.
