@@ -45,7 +45,7 @@ private class FlowAsPublisher<T: Any>(private val flow: Flow<T>) : Publisher<T> 
         }
 
         private suspend fun CoroutineScope.consumeFlow() {
-            flow.flowBridge { value ->
+            flow.collect { value ->
                 if (!isActive) {
                     subscriber.onComplete()
                     yield() // Force cancellation

@@ -13,7 +13,7 @@ class FlowBuilderTest : TestBase() {
     @Test
     fun testWithContextDoesNotChangeExecution() = runTest {
         val flow = flow(named("original")) {
-            push(captureName())
+            emit(captureName())
         }
 
         var result: String = "unknown"

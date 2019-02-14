@@ -13,20 +13,20 @@ import kotlin.experimental.*
  * Example of usage:
  * ```
  * fun fibonacci(): Flow<Long> = flow {
- *   push(1L)
+ *   emit(1L)
  *   var f1 = 1L
  *   var f2 = 1L
  *   repeat(100) {
  *     var tmp = f1
  *     f1 = f2
  *     f2 += tmp
- *     push(f1)
+ *     emit(f1)
  *   }
  * }
  * ```
  */
-public fun <T : Any> flow(@BuilderInference block: suspend FlowSubscriber<T>.() -> Unit) = object : Flow<T> {
-    override suspend fun subscribe(consumer: FlowSubscriber<T>) = consumer.block()
+public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
+    override suspend fun collect(consumer: FlowCollector<T>) = consumer.block()
 }
 
 /**
@@ -34,7 +34,7 @@ public fun <T : Any> flow(@BuilderInference block: suspend FlowSubscriber<T>.() 
  * Throws [IllegalStateException] if [flowContext] contains [Job] element, all parent-child relationship
  * and cancellation should be controlled by downstream.
  */
-public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowSubscriber<T>.() -> Unit): Flow<T> =
+public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> =
     flow(block).withUpstreamContext(flowContext)
 
 /**
@@ -43,8 +43,8 @@ public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block
 public fun <T : Any> (() -> T).flow(): Flow<T> = SuppliedFlow(this)
 
 private class SuppliedFlow<T : Any>(private val supplier: () -> T) : Flow<T> {
-    override suspend fun subscribe(consumer: FlowSubscriber<T>) {
-        consumer.push(supplier())
+    override suspend fun collect(consumer: FlowCollector<T>) {
+        consumer.emit(supplier())
     }
 }
 
@@ -53,7 +53,7 @@ private class SuppliedFlow<T : Any>(private val supplier: () -> T) : Flow<T> {
  */
 public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
-        push(value)
+        emit(value)
     }
 }
 

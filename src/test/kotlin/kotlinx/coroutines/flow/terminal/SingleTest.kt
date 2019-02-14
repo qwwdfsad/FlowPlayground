@@ -10,7 +10,7 @@ class SingleTest : TestBase() {
     @Test
     fun testSingle() = runTest {
         val result = flow {
-            push(239L)
+            emit(239L)
         }.awaitSingle()
 
         assertEquals(239L, result)
@@ -20,8 +20,8 @@ class SingleTest : TestBase() {
     fun testMultipleValues() = runTest {
         assertFailsWith<RuntimeException> {
             flow {
-                push(239L)
-                push(240L)
+                emit(239L)
+                emit(240L)
             }.awaitSingle()
         }
     }
@@ -43,7 +43,7 @@ class SingleTest : TestBase() {
 
         assertFailsWith<TestException> {
             flow {
-                push(1)
+                emit(1)
                 throw TestException()
             }.awaitSingle()
         }

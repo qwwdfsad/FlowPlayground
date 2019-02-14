@@ -6,6 +6,7 @@ group 'org.jetbrains.kotlinx'
 version '1.0-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     jcenter()
 }
 

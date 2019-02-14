@@ -9,9 +9,9 @@ import kotlin.coroutines.*
 fun <T : Any> Flow<T>.consumeOn(
     context: CoroutineContext, onError: suspend (Throwable) -> Unit = { throw it },
     onComplete: suspend () -> Unit = {}, onNext: suspend (T) -> Unit
-): Job = GlobalScope.launch(Dispatchers.Unconfined) {
+): Job = GlobalScope.launch(context) {
         try {
-            withDownstreamContext(context).flowBridge(onNext)
+            withDownstreamContext(context).collect(onNext)
             onComplete()
         } catch (e: Throwable) {
             onError(e)

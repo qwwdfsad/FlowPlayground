@@ -31,7 +31,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
     override fun createFailedPublisher(): Publisher<Long>? {
         /*
          * This is a hack for our adapter structure:
-         * Tests assume that calling "subscribe" is enough for publisher to fail and it is not
+         * Tests assume that calling "collect" is enough for publisher to fail and it is not
          * true for our implementation
          */
         val pub = { error(42) }.flow().asPublisher()

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.operators.*
  */
 public suspend fun <T: Any> Flow<T>.awaitSingle(): T {
     var result: T? = null
-    flowBridge {
+    collect {
         if (result != null) error("Expected only one element")
         result = it
     }

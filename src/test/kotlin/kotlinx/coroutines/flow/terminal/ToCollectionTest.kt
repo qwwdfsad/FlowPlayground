@@ -2,7 +2,6 @@ package kotlinx.coroutines.flow.terminal
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
-import kotlinx.coroutines.flow.operators.*
 import org.junit.Test
 import kotlin.test.*
 
@@ -10,7 +9,7 @@ class ToCollectionTest : TestBase() {
 
     private val flow = flow {
         repeat(10) {
-            push(42)
+            emit(42)
         }
     }
 

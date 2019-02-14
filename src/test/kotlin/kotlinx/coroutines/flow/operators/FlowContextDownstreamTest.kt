@@ -17,7 +17,7 @@ class FlowContextDownstreamTest : TestBase() {
         val captured = ArrayList<String>()
         val flow = flow {
             captured += captureName()
-            push(314)
+            emit(314)
         }
 
         val mapper: suspend (Int) -> Int = {
@@ -38,7 +38,7 @@ class FlowContextDownstreamTest : TestBase() {
     @Test
     public fun testWithDownstreamThrowingSource() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             throw TestException()
         }.map { it }.withDownstreamContext(named("throwing"))
 
@@ -49,7 +49,7 @@ class FlowContextDownstreamTest : TestBase() {
     @Test
     public fun testWithDownstreamThrowingOperator() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             delay(Long.MAX_VALUE)
         }.map {
             throw TestException();
@@ -63,7 +63,7 @@ class FlowContextDownstreamTest : TestBase() {
     @Test
     public fun testWithDownstreamThrowingDownstreamOperator() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             delay(Long.MAX_VALUE)
         }.map { it }
             .withDownstreamContext(named("throwing"))
@@ -81,7 +81,7 @@ class FlowContextDownstreamTest : TestBase() {
 
         flow {
             captured += captureName()
-            push(Unit)
+            emit(Unit)
         }.map(mapper)
             .withDownstreamContext(named("downstream"))
             .map(mapper)
@@ -148,7 +148,7 @@ class FlowContextDownstreamTest : TestBase() {
         var switch = 0
         val flow = flow {
             captured += captureName()
-            push(Unit)
+            emit(Unit)
             if (switch == 0) throw TestException()
         }.map { if (switch == 1) throw TestException() else it }
             .withDownstreamContext(named("downstream") + Job())
@@ -170,7 +170,7 @@ class FlowContextDownstreamTest : TestBase() {
         var invoked = false
         val flow = flow {
             captured += captureName()
-            push(Unit)
+            emit(Unit)
             latch.receive()
             try {
                 delay(Long.MAX_VALUE)

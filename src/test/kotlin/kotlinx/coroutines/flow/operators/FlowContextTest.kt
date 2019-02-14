@@ -15,7 +15,7 @@ class FlowContextTest : TestBase() {
     fun testMixedContext() = runTest {
         val flow = flow {
             captured += captureName()
-            push(314)
+            emit(314)
         }
 
         val mapper: suspend (Int) -> Int = {
@@ -43,7 +43,7 @@ class FlowContextTest : TestBase() {
     fun testExceptionReporting() = runTest {
         val flow = flow(named("upstream")) {
             captured += captureName()
-            push(314)
+            emit(314)
             delay(Long.MAX_VALUE)
         }.map {
             throw TestException()
@@ -57,7 +57,7 @@ class FlowContextTest : TestBase() {
     fun testMixedContextAndException() = runTest {
         val baseFlow = flow {
             captured += captureName()
-            push(314)
+            emit(314)
             delay(Long.MAX_VALUE)
         }
 

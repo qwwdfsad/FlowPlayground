@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.builders.*
 fun <T: Any> Flow<T>.count(): Flow<Long> =
     flow {
         var i = 0L
-        flowBridge {
+        collect {
             ++i
         }
-        push(i)
+        emit(i)
     }
 
 suspend fun main() {
@@ -24,14 +24,14 @@ private suspend fun example2() {
         42
     }
 
-    flow(f1, f2).flatMap { it }.count().flowBridge {
+    flow(f1, f2).flatMap { it }.count().collect {
         println("$it elements")
     }
 }
 
 
 private suspend fun throwingProducer() {
-    flow(1, 2, 3, 4).delayEach(100).count().flowBridge {
+    flow(1, 2, 3, 4).delayEach(100).count().collect {
         println("$it elements")
     }
 }

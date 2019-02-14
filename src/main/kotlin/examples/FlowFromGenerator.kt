@@ -7,22 +7,21 @@ import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 
 fun fibonacci(): Flow<Long> = flow {
-    push(1L)
+    emit(1L)
     var f1 = 1L
     var f2 = 1L
     while (true) {
         var tmp = f1
         f1 = f2
         f2 += tmp
-        push(f1)
+        emit(f1)
     }
 }
 
 suspend fun main() {
     fibonacci()
         .limit(10)
-        .skip(5)
-        .consumeOn(Dispatchers.Unconfined) {
+        .skip(5).collect {
             println(it)
         }
 }

@@ -60,7 +60,7 @@ class FlowContextUpstreamTest : TestBase() {
 
     @Test
     fun testFlowBuilderWithUpstream() = runTest {
-        val result = flow(named("upstream")) { push(captureName()) }
+        val result = flow(named("upstream")) { emit(captureName()) }
             .map {
                 assertEquals("upstream", it)
                 assertEquals("upstream", captureName())
@@ -78,7 +78,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test
     public fun testWithUpstreamThrowingSource() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             throw TestException()
         }
 
@@ -88,7 +88,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test
     public fun testWithUpstreamThrowingOperator() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             delay(Long.MAX_VALUE)
         }.map {
             throw TestException(); it
@@ -101,7 +101,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test
     public fun testWithUpstreamThrowingDownstreamOperator() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             delay(Long.MAX_VALUE)
         }.map {
             it
@@ -115,7 +115,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test
     public fun testWithUpstreamThrowingConsumer() = runTest {
         val flow = flow {
-            push(captureName())
+            emit(captureName())
             delay(Long.MAX_VALUE)
         }
 
@@ -130,7 +130,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test(expected = IllegalStateException::class)
     fun testContextWithJob() = runTest {
         flow(named("foo") + Job()) {
-            push(1)
+            emit(1)
         }
     }
 
@@ -184,7 +184,7 @@ class FlowContextUpstreamTest : TestBase() {
     fun testIndependentOperatorContext() = runTest {
         val value = flow {
             captured += captureName()
-            push(-239)
+            emit(-239)
         }.map {
             captured += captureName()
             it
@@ -201,7 +201,7 @@ class FlowContextUpstreamTest : TestBase() {
     @Test
     fun testMultipleUpstreamContexts() = runTest {
         flow {
-            push(1)
+            emit(1)
             captured += captureName()
         }.map { captured += captureName() }
             .withUpstreamContext(named("expected"))

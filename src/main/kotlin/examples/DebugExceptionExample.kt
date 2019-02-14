@@ -12,7 +12,7 @@ fun eliminateTailCall() {
 
 fun generate(): Flow<Int> {
     return flow {
-        push(1)
+        emit(1)
         coroutineScope {
             launch {
                 doAsyncPush()
@@ -48,7 +48,7 @@ private suspend fun throwingOperator() {
 }
 
 suspend fun main() {
-    // Run with -ea
+    // Run with -ea, add inline to flow and collect methods
     throwingProducer()
     System.err.println("\n\n")
     throwingOperator()

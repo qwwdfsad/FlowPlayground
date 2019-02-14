@@ -11,7 +11,7 @@ fun <T : Any> BroadcastChannel<T>.asFlow() = flow<T> {
     val subscription = openSubscription()
     try {
         for (element in subscription) {
-            push(element)
+            emit(element)
         }
     } catch (e: Throwable) {
         if (e is CancellationException) {
@@ -24,7 +24,7 @@ fun <T : Any> BroadcastChannel<T>.asFlow() = flow<T> {
 }
 
 fun <T : Any> Flow<T>.asChannel(): BroadcastChannel<T> = GlobalScope.broadcast(Dispatchers.Unconfined) {
-    flowBridge { value ->
+    collect { value ->
         send(value)
     }
 }

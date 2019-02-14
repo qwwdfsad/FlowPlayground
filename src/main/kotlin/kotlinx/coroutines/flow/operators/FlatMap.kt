@@ -14,10 +14,10 @@ fun <T : Any, R : Any> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> =
         // Let's try to leverage the fact that flatMap is never contended
         val flatMap = FlatMapFlow(this)
         val root = CompletableDeferred<Unit>()
-        flowBridge {
+        collect {
             val inner = mapper(it)
             GlobalScope.launch(root + Dispatchers.Unconfined) {
-                inner.flowBridge { value ->
+                inner.collect { value ->
                     flatMap.push(value)
                 }
             }
@@ -27,7 +27,7 @@ fun <T : Any, R : Any> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> =
         root.await()
     }
 
-private class FlatMapFlow<T>(private val downstream: FlowSubscriber<T>) {
+private class FlatMapFlow<T>(private val downstream: FlowCollector<T>) {
     private val channel: Channel<T> by lazy { Channel<T>(16) }
     private val inProgress = AtomicBoolean(false)
 
@@ -41,14 +41,14 @@ private class FlatMapFlow<T>(private val downstream: FlowSubscriber<T>) {
             return
         }
 
-        downstream.push(value)
+        downstream.emit(value)
         helpPush()
     }
 
     private suspend fun helpPush() {
         var element = channel.poll()
         while (element != null) {
-            downstream.push(element)
+            downstream.emit(element)
             element = channel.poll()
         }
 
@@ -62,7 +62,7 @@ suspend fun flowFlatMap() {
         val index = it
         val inner = Array(it) { "$index flowable, $it's element" }.asIterable().asFlow()
         inner.delayEach(if (it == 5) it * 500L else it * 1000L)
-    }.flowBridge {
+    }.collect {
         val diff = (System.currentTimeMillis() - base) / 1000 * 1000
         println("$it, ($diff)")
     }

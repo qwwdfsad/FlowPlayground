@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.terminal.*
  * mDisposable.add(mViewModel.getUserName()
  *  .subscribeOn(Schedulers.io())
  *  .observeOn(AndroidSchedulers.mainThread())
- *  .subscribe(userName -> mUserName.setText(userName),
+ *  .collect(userName -> mUserName.setText(userName),
  *       throwable -> Log.e(TAG, "Unable to update username", throwable)));
  * ```
  */
@@ -55,14 +55,14 @@ object IntDaoImpl : IntDao {
     override fun readInt(key: String): Flow<Int> = flow {
         println("Doing blocking call in thread: ${Thread.currentThread()}")
         Thread.sleep(100)
-        push(42)
+        emit(42)
     }
 
     override fun readIntWithIoConvention(key: String): Flow<Int> =
         flow(IO) {
             println("Doing blocking call in thread: ${Thread.currentThread()}")
             Thread.sleep(100)
-            push(42)
+            emit(42)
         }
 }
 

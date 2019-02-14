@@ -24,20 +24,20 @@ fun <T : Any> Flow<T>.debounce(timeoutMillis: Long): Flow<T> =
 
                 onTimeout(timeoutMillis) {
                     if (lastReceived != null) {
-                        push(lastReceived!!)
+                        emit(lastReceived!!)
                     }
                     true
                 }
             }
 
             if (lastReceived != null) {
-                push(lastReceived!!)
+                emit(lastReceived!!)
             }
 
             lastReceived
         }
 
-        flowBridge {
+        collect {
             conflated.send(it)
         }
 
@@ -46,6 +46,6 @@ fun <T : Any> Flow<T>.debounce(timeoutMillis: Long): Flow<T> =
         conflated.close()
         val lastPushedValue = job.await()
         if (lastPushedValue != lastValue && lastValue != null) {
-            push(lastValue)
+            emit(lastValue)
         }
     }

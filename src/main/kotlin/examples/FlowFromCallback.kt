@@ -57,7 +57,7 @@ object InfiniteApiInstance : CallbackBasedApi {
     }
 }
 
-fun main() {
+suspend fun main() {
     val consumptionContext = newSingleThreadContext("Consumer")
     val flow = InfiniteApiInstance.flow()
         .map { it }
@@ -66,8 +66,8 @@ fun main() {
     println("Flow prepared")
     var elements = 0
     flow.limit(10)
-        .consumeOn(consumptionContext + CoroutineExceptionHandler { _, t -> println("Handling $t") }) {
+        .consumeOn(consumptionContext, onError = { t -> println("Handling $t") }) { // CEH can be used as well
             println("Received $it on thread ${Thread.currentThread()}")
             if (++elements > 5) throw RuntimeException()
-        }
+        }.join()
 }

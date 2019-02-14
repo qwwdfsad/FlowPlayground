@@ -81,7 +81,7 @@ public fun <T : Any> FlowSink.Companion.create(
             // TODO consumeEach on channel?
             try {
                 for (element in sink.channel) {
-                    push(element)
+                    emit(element)
                 }
             } finally {
                 sink.channel.cancel()

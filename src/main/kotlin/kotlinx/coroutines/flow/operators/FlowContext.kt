@@ -36,8 +36,8 @@ public fun <T : Any> Flow<T>.withUpstreamContext(upstreamContext: CoroutineConte
 
     return flow {
         withContext(upstreamContext) {
-            flowBridge {
-                push(it)
+            collect {
+                emit(it)
             }
         }
     }
@@ -60,14 +60,14 @@ public fun <T : Any> Flow<T>.withDownstreamContext(downstreamContext: CoroutineC
     flow {
         coroutineScope {
             val channel = produce<T>(capacity = bufferSize) {
-                flowBridge {
+                collect {
                     channel.send(it)
                 }
             }
 
             withContext(downstreamContext) {
                 for (value in channel) {
-                    push(value)
+                    emit(value)
                 }
             }
 

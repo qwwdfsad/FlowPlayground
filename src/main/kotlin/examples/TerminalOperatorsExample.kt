@@ -11,7 +11,7 @@ import java.util.*
 suspend fun <T : Any> Flow<T>.first(): T {
     var result: T? = null
     try {
-        flowBridge { value ->
+        collect { value ->
             result = value
         }
         return result ?: throw NoSuchElementException("Flow is empty")
@@ -22,7 +22,7 @@ suspend fun <T : Any> Flow<T>.first(): T {
 
 suspend fun <T : Any> Flow<T>.last(): T {
     var lastValue: T? = null
-    flowBridge { value ->
+    collect { value ->
         lastValue = value
     }
 
@@ -38,7 +38,7 @@ suspend fun main() {
         println("Computing sequence in CPU thread")
         repeat(Int.MAX_VALUE) {
             if (it > 4) println("Whoa, should not happen!")
-            push(it)
+            emit(it)
         }
     }
 

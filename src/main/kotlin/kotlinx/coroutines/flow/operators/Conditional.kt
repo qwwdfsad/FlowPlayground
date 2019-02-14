@@ -11,8 +11,8 @@ fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
     return flow {
         var consumed = 0
         try {
-            flowBridge { value ->
-                push(value)
+            collect { value ->
+                emit(value)
 
                 if (++consumed == count) {
                     throw FlowConsumerAborted()
@@ -28,8 +28,8 @@ fun <T : Any> Flow<T>.skip(count: Int): Flow<T> {
     require(count >= 0) { "skip count should be non-negative, but had $count" }
     return flow {
         var skipped = 0
-        flowBridge { value ->
-            if (++skipped > count) push(value)
+        collect { value ->
+            if (++skipped > count) emit(value)
         }
     }
 }
