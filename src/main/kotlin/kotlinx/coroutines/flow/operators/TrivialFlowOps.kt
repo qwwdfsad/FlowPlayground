@@ -13,14 +13,14 @@ suspend inline fun <T : Any> Flow<T>.collect(crossinline action: suspend (T) -> 
         override suspend fun emit(value: T) = action(value)
     })
 
-fun <T : Any> Flow<T>.filter(predicate: suspend (T) -> Boolean): Flow<T> =
+inline fun <T : Any> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> =
     flow {
         collect { value ->
             if (predicate(value)) emit(value)
         }
     }
 
-fun <T : Any, R : Any> Flow<T>.map(transform: suspend (T) -> R): Flow<R> =
+inline fun <T : Any, R : Any> Flow<T>.map(crossinline transform: suspend (T) -> R): Flow<R> =
     flow {
         collect { value ->
             emit(transform(value))

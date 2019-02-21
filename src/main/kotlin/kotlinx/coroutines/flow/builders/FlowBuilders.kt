@@ -25,7 +25,7 @@ import kotlin.experimental.*
  * }
  * ```
  */
-public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
+public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
     override suspend fun collect(consumer: FlowCollector<T>) = consumer.block()
 }
 
@@ -34,7 +34,7 @@ public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -
  * Throws [IllegalStateException] if [flowContext] contains [Job] element, all parent-child relationship
  * and cancellation should be controlled by downstream.
  */
-public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> =
+public inline fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> =
     flow(block).withUpstreamContext(flowContext)
 
 /**
