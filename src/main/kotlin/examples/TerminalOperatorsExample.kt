@@ -32,7 +32,6 @@ suspend fun <T : Any> Flow<T>.last(): T {
 
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
-
 suspend fun main() {
     val flow = flow(Dispatchers.Default) {
         println("Computing sequence in CPU thread")
