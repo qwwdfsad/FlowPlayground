@@ -162,26 +162,25 @@ class FlowContextDownstreamTest : TestBase() {
         }
     }
 
-    @Test
-    @Ignore
-    fun testMultipleDownstreamContextsWithJobsCancellation() = runTest() {
-        fail("Discuss it")
+    @Test(timeout = 1000L)
+    fun testMultipleDownstreamContextsWithJobsCancellation() = runTest {
         val latch = Channel<Unit>()
         var invoked = false
         val flow = flow {
             captured += captureName()
             emit(Unit)
-            latch.receive()
+            latch.send(Unit)
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 invoked = true
             }
-        }.map { it }.withDownstreamContext(named("downstream2") + Job())
+        }.map { it }.withDownstreamContext(named("downstream") + Job())
 
         val job = launch {
             flow.awaitSingle()
         }
+
         latch.receive()
         job.cancelAndJoin()
         assertTrue(invoked)
