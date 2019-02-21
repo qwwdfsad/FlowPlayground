@@ -26,7 +26,7 @@ import kotlin.experimental.*
  * ```
  */
 public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
-    override suspend fun collect(consumer: FlowCollector<T>) = consumer.block()
+    override suspend fun collect(collector: FlowCollector<T>) = collector.block()
 }
 
 /**
@@ -43,8 +43,8 @@ public inline fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInferenc
 public fun <T : Any> (() -> T).flow(): Flow<T> = SuppliedFlow(this)
 
 private class SuppliedFlow<T : Any>(private val supplier: () -> T) : Flow<T> {
-    override suspend fun collect(consumer: FlowCollector<T>) {
-        consumer.emit(supplier())
+    override suspend fun collect(collector: FlowCollector<T>) {
+        collector.emit(supplier())
     }
 }
 

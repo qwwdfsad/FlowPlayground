@@ -18,14 +18,14 @@ public fun <T: Any> Publisher<T>.asFlow(batchSize: Int = 1): Flow<T> =
 private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, private val batchSize: Int) :
     Flow<T> {
 
-    override suspend fun collect(consumer: FlowCollector<T>) {
+    override suspend fun collect(collector: FlowCollector<T>) {
         val channel = Channel<T>(batchSize)
         val subscriber = ReactiveSubscriber(channel, batchSize)
         publisher.subscribe(subscriber)
         var consumed = 0
         try {
             for (i in channel) {
-                consumer.emit(i)
+                collector.emit(i)
                 if (++consumed == batchSize) {
                     consumed = 0
                     subscriber.subscription.request(batchSize.toLong())
