@@ -10,8 +10,10 @@ import java.util.concurrent.*
 
 /**
  * Benchmark                     Mode  Cnt    Score    Error  Units
- * FuseBenchmark.fuseableInline  avgt    5  772.411 ± 19.412  us/op
- * FuseBenchmark.regularInline   avgt    5  317.392 ± 14.523  us/op
+ * FuseBenchmark.flux            avgt    5  156.115 ±  7.660  us/op
+ * FuseBenchmark.fluxGenerator   avgt    5  183.943 ±  3.528  us/op
+ * FuseBenchmark.fuseableInline  avgt    5  534.541 ± 14.829  us/op
+ * FuseBenchmark.regularInline   avgt    5  294.328 ± 10.653  us/op
  */
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
