@@ -40,3 +40,20 @@ public fun <T : Any> Flow<T>.onErrorReturn(fallback: T) = flow {
         emit(fallback)
     }
 }
+
+public fun <T : Any> Flow<T>.retry(retries: Int = Int.MAX_VALUE): Flow<T> {
+    require(retries > 0)
+    return flow {
+        var retries = retries
+        while (true) {
+            try {
+                collect { value ->
+                    emit(value)
+                }
+                return@flow
+            } catch (e: Throwable) {
+                if (retries-- == 0) throw e
+            }
+        }
+    }
+}
