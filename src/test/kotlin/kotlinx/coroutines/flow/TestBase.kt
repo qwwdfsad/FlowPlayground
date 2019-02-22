@@ -27,7 +27,7 @@ open class TestBase {
         }
     }
 
-    protected suspend inline fun <reified T : Throwable> assertFailsWith(block: suspend () -> Unit) {
+    protected inline fun <reified T : Throwable> assertFailsWith(block: () -> Unit) {
         try {
             block()
             error("Should not be reached")

@@ -9,79 +9,77 @@ import kotlinx.coroutines.flow.builders.*
 import kotlin.experimental.*
 
 /**
- * Bridge interface for non-suspending and suspending worlds to create flows from callback-based API.
+ * Bridge interface for non-suspending and suspending worlds to flowViaSink flows from callback-based API.
  * This interface is the direct analogue of [FluxSink] and should not be implemented directly.
- * Use [FlowSink.create][FlowSink.Companion.create] instead.
- * Methods of this interface never throw any exceptions except virtual machine errors.
+ * Use [flowViaSink] instead.
  *
  * See example of usage in `FlowFromCallback.kt`
- *
- * TODO design: should we add `val isCancelled`? What for?
  */
 public interface FlowSink<T : Any> {
-
     /**
-     * Emits next [value]
+     * Offers a [value] to a downstream flow.
+     * Returns `true` if value was successfully emitted into downstream `false` otherwise.
+     *
+     * This method outcome is tied up with the way this sink was created and users should refer to a factory documentation.
+     * For example, if sink was created with `flowViaSink(buffer = Channels.UNLIMITED)`,
+     * offer always returns `true`.
      */
-    public fun next(value: T)
+    public fun offer(value: T): Boolean
 
     /**
-     * Emits error as terminal state of the sink.
-     * Consecutive calls to [next], [completed] and [error] are ignored.
+     * Completes this sink with the given [error], that is rethrown to the flow consumer.
+     * Consecutive calls to [offer], [complete] and [error] are ignored.
      */
-    public fun error(error: Throwable)
+    public fun completeExceptionally(error: Throwable)
 
     /**
-     * Emits event indicating that successful terminal state is reached.
-     * Consecutive calls to [next], [completed] and [error] are ignored.
+     * Completes this sink successfully, ending the downstream flow.
+     * Consecutive calls to [offer], [complete] and [completeExceptionally] are ignored.
      */
-    public fun completed()
+    public fun complete()
 
     /**
-     * Suspends until either [completed] or [error] are invoked from sink side,
-     * or [Flow] subscriber completes.
+     * Suspends until either [complete] or [completeExceptionally] are invoked from sink side,
+     * or terminal flow operator completes.
      */
     public suspend fun join()
-
-    public companion object // To write FlowSink.create { ... }
 }
 
 /**
- * Creates an instance of cold [Flow] from a supplied sink.
- * To control backpressure, [bufferSize] and [overflowStrategy] are used, where the former
- * determines a number of in-flight requests and the latter determines a behaviour in case of buffer overflow.
+ * Creates an instance of the cold [Flow] from a supplied sink.
  *
- * Provided [FlowSink] **is not thread-safe**.
+ * To control backpressure, [bufferSize] is used and matches directly to the `capacity` parameter of [Channel]
+ * factory. Resulting channel is later used by sink to communicate with flow and its buffer determines
+ * backpressure buffer size or its behaviour (e.g. in case when [Channel.CONFLATED] was used).
+ *
+ * Provided [FlowSink] is thread-safe.
  *
  * Example of usage:
  * ```
- * fun flowFrom(api: CallbackBasedApi): Flow<Int> = FlowSink.create { sink ->
- *  val adapter = FlowSinkAdapter(sink) <
+ * fun flowFrom(api: CallbackBasedApi): Flow<Int> = flowViaSink { sink ->
+ *  val adapter = FlowSinkAdapter(sink) // implementation of callback interface
  *  api.register(adapter)
  *  sink.join() // wait until producer or consumer is done
  *  api.unregister(adapter)
  * }
  * ```
  */
-@BuilderInference
-public fun <T : Any> FlowSink.Companion.create(
-    overflowStrategy: OverflowStrategy = OverflowStrategy.BLOCK,
+public fun <T : Any> flowViaSink(
     bufferSize: Int = 16,
-    block: suspend (FlowSink<T>) -> Unit
+    @BuilderInference block: suspend (FlowSink<T>) -> Unit
 ): Flow<T> {
-    require(overflowStrategy == OverflowStrategy.BLOCK) { "Only BLOCK overflow strategy is supported, but had $overflowStrategy" }
     require(bufferSize >= 0) { "Buffer size should be positive, but was $bufferSize" }
     return flow {
         coroutineScope {
-            val sink = FlowSinkImpl<T>(overflowStrategy, bufferSize)
+            val sink = FlowSinkImpl<T>(bufferSize)
             launch {
                 block(sink)
             }
 
             // TODO consumeEach on channel?
             try {
-                for (element in sink.channel) {
-                    emit(element)
+                for (value in sink.channel) {
+                    emit(value)
                 }
             } finally {
                 sink.channel.cancel()
@@ -90,35 +88,27 @@ public fun <T : Any> FlowSink.Companion.create(
     }
 }
 
-public enum class OverflowStrategy {
-    ERROR,
-    DROP,
-    LATEST,
-    BLOCK,
-    BUFFER
-}
-
 private class FlowSinkImpl<T : Any>(
-    private val backpressure: OverflowStrategy,
     bufferSize: Int
 ) : FlowSink<T> {
 
     @JvmField
     internal val channel = Channel<T>(bufferSize)
 
-    override fun next(value: T) {
-        try {
-            channel.sendBlocking(value)
+    override fun offer(value: T): Boolean {
+        return try {
+            // TODO other exceptions?
+            channel.offer(value)
         } catch (e: CancellationException) {
-            // Do nothing, items emitted after cancellation are ignored
+            false
         }
     }
 
-    override fun error(error: Throwable) {
+    override fun completeExceptionally(error: Throwable) {
         channel.close(error)
     }
 
-    override fun completed() {
+    override fun complete() {
         channel.close()
     }
 

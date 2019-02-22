@@ -51,11 +51,11 @@ class FlowSinkTest {
     fun testThrowingConsumer() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.next(++i)
+            it.offer(++i)
         }
 
 
-        val flow = FlowSink.create<Int> { sink ->
+        val flow = flowViaSink<Int> { sink ->
             api.start(sink)
             try {
                 sink.join()
@@ -92,11 +92,11 @@ class FlowSinkTest {
     fun testThrowingSource() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.next(++i)
-            if (i == 5) it.error(java.lang.RuntimeException())
+            it.offer(++i)
+            if (i == 5) it.completeExceptionally(java.lang.RuntimeException())
         }
 
-        val flow = FlowSink.create<Int> { sink ->
+        val flow = flowViaSink<Int> { sink ->
             api.start(sink)
             sink.join()
             api.stop()
