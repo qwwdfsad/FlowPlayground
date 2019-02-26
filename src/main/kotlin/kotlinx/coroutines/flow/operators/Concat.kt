@@ -14,9 +14,9 @@ fun <T: Any> Flow<Flow<T>>.concat(): Flow<T> =
     }
 
 suspend fun main() {
-    val f1 = flow(1, 2, 3).delayEach(1000)
-    val f2 = flow(1, 2, 3).delayEach(1000).map { 3 + it }
-    flow(f1, f2).concat().collect {
+    val f1 = flowOf(1, 2, 3).delayEach(1000)
+    val f2 = flowOf(1, 2, 3).delayEach(1000).map { 3 + it }
+    flowOf(f1, f2).concat().collect {
         println(it)
     }
 }

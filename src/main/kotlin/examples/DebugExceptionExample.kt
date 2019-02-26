@@ -29,9 +29,9 @@ private fun doAsyncPush() {
 
 private suspend fun throwingProducer() {
     generate().map { it }
-        .withUpstreamContext(newSingleThreadContext("upstream ctx 1"))
+        .flowOn(newSingleThreadContext("upstream ctx 1"))
         .map { it }
-        .withUpstreamContext(newSingleThreadContext("upstream ctx 2"))
+        .flowOn(newSingleThreadContext("upstream ctx 2"))
         .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
             println("You will see me once")
         }.join()
@@ -39,9 +39,9 @@ private suspend fun throwingProducer() {
 
 private suspend fun throwingOperator() {
     generate().map { it }
-        .withUpstreamContext(newSingleThreadContext("upstream ctx 1"))
+        .flowOn(newSingleThreadContext("upstream ctx 1"))
         .map { error("foo") }
-        .withUpstreamContext(newSingleThreadContext("upstream ctx 2"))
+        .flowOn(newSingleThreadContext("upstream ctx 2"))
         .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
             println("You will never see me")
         }.join()

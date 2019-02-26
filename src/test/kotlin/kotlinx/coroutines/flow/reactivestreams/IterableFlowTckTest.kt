@@ -34,7 +34,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
          * Tests assume that calling "collect" is enough for publisher to fail and it is not
          * true for our implementation
          */
-        val pub = { error(42) }.flow().asPublisher()
+        val pub = { error(42) }.asFlow().asPublisher()
         return Publisher { subscriber ->
             pub.subscribe(object : Subscriber<Long> by subscriber as Subscriber<Long> {
                 override fun onSubscribe(s: Subscription) {

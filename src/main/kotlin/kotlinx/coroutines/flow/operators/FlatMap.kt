@@ -59,7 +59,7 @@ private class FlatMapFlow<T>(private val downstream: FlowCollector<T>) {
 
 suspend fun flowFlatMap() {
     val base = System.currentTimeMillis()
-    flow(3, 4, 5).flatMap {
+    flowOf(3, 4, 5).flatMap {
         val index = it
         val inner = Array(it) { "$index flowable, $it's element" }.asIterable().asFlow()
         inner.delayEach(if (it == 5) it * 500L else it * 1000L)

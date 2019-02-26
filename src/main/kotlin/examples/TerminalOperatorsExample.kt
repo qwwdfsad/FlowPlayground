@@ -1,6 +1,7 @@
 package examples
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.operators.*
@@ -32,13 +33,13 @@ suspend fun <T : Any> Flow<T>.last(): T {
 suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
 suspend fun main() {
-    val flow = flow(Dispatchers.Default) {
+    val flow = flow {
         println("Computing sequence in CPU thread")
         repeat(Int.MAX_VALUE) {
-            if (it > 4) println("Whoa, should not happen!")
             emit(it)
+            if (it > 4) println("Whoa, should not happen!")
         }
-    }
+    }.flowOn(Dispatchers.Default, bufferSize = Channel.RENDEZVOUS) // Play with it and spot the difference
 
     val sum = flow.limit(5).sum()
     println("Sum: $sum")

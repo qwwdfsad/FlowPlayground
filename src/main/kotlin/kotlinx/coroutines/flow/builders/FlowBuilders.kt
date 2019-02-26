@@ -3,8 +3,6 @@
 package kotlinx.coroutines.flow.builders
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
-import kotlin.coroutines.*
 import kotlin.experimental.*
 
 /**
@@ -25,27 +23,22 @@ import kotlin.experimental.*
  * }
  * ```
  */
-public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
+public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
     override suspend fun collect(collector: FlowCollector<T>) = collector.block()
 }
 
 /**
- * Creates flow from a given suspendable [block] that will be executed within provided [flowContext].
- * Throws [IllegalStateException] if [flowContext] contains [Job] element, all parent-child relationship
- * and cancellation should be controlled by downstream.
+ * Creates flow that produces single value from a given functional type.
  */
-public fun <T : Any> flow(flowContext: CoroutineContext, @BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> =
-    flow(block).withUpstreamContext(flowContext)
+public fun <T : Any> (() -> T).asFlow(): Flow<T> = flow {
+    emit(invoke())
+}
 
 /**
  * Creates flow that produces single value from a given functional type.
  */
-public fun <T : Any> (() -> T).flow(): Flow<T> = SuppliedFlow(this)
-
-private class SuppliedFlow<T : Any>(private val supplier: () -> T) : Flow<T> {
-    override suspend fun collect(collector: FlowCollector<T>) {
-        collector.emit(supplier())
-    }
+public fun <T : Any> (suspend () -> T).asFlow(): Flow<T> = flow {
+    emit(invoke())
 }
 
 /**
@@ -60,4 +53,4 @@ public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
 /**
  * Creates flow that produces values from a given array of elements.
  */
-public fun <T : Any> flow(vararg elements: T) = elements.asIterable().asFlow()
+public fun <T : Any> flowOf(vararg elements: T) = elements.asIterable().asFlow()

@@ -15,14 +15,6 @@ import kotlinx.coroutines.flow.terminal.*
  * Note that this example exists mostly for compatibility purpose and we do not recommend
  * to expose database API in the form of flows instead of regular suspend functions.
  *
- * Example of such "real" usage may be found in Android samples: https://github.com/googlesamples/android-architecture-components/blob/master/BasicRxJavaSample/app/src/main/java/com/example/android/observability/ui/UserActivity.java
- * ```
- * mDisposable.add(mViewModel.getUserName()
- *  .subscribeOn(Schedulers.io())
- *  .observeOn(AndroidSchedulers.mainThread())
- *  .collect(userName -> mUserName.setText(userName),
- *       throwable -> Log.e(TAG, "Unable to update username", throwable)));
- * ```
  */
 interface IntDao {
 
@@ -59,24 +51,24 @@ object IntDaoImpl : IntDao {
     }
 
     override fun readIntWithIoConvention(key: String): Flow<Int> =
-        flow(IO) {
+        flow {
             println("Doing blocking call in thread: ${Thread.currentThread()}")
             Thread.sleep(100)
             emit(42)
-        }
+        }.flowOn(IO)
 }
 
 
 suspend fun main() {
-    println("Sample 1: missing 'withUpstreamContext' usage:")
+    println("Sample 1: missing 'flowOn' usage:")
     IntDaoImpl.readInt("foo")
         .consumeOn(Main) {
             println("Received $it on thread ${Thread.currentThread()}")
         }.join()
 
-    println("\nSample 2: with 'withUpstreamContext':")
+    println("\nSample 2: with 'flowOn':")
     IntDaoImpl.readInt("foo")
-        .withUpstreamContext(IO)
+        .flowOn(IO)
         .consumeOn(Main) {
             println("Received $it on thread ${Thread.currentThread()}")
         }.join()

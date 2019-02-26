@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
+import java.lang.IllegalArgumentException
 import kotlin.test.*
 
 class FlowOnTest : TestBase() {
@@ -17,7 +18,7 @@ class FlowOnTest : TestBase() {
         val source = Source(42)
         val consumer = Consumer(42)
 
-        val flow = source::produce.flow()
+        val flow = source::produce.asFlow()
         flow.flowOn(named("ctx1")).consumeOn(coroutineContext) {
             consumer.consume(it)
         }.join()
@@ -43,7 +44,7 @@ class FlowOnTest : TestBase() {
             it
         }
 
-        val flow = source::produce.flow()
+        val flow = source::produce.asFlow()
         flow.map(mapper)
             .flowOn(named("ctx1"))
             .map(mapper)
@@ -115,11 +116,11 @@ class FlowOnTest : TestBase() {
         ensureActive()
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test(expected = IllegalArgumentException::class)
     fun testFlowOnWithJob() = runTest {
-        flow(named("foo") + Job()) {
+        flow {
             emit(1)
-        }
+        }.flowOn(named("foo") + Job())
     }
 
     @Test

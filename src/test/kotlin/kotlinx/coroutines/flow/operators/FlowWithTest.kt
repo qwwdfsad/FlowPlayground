@@ -57,8 +57,7 @@ class FlowWithTest : TestBase() {
             delay(Long.MAX_VALUE)
         }.flowWith(named("throwing")) {
             map {
-                throw TestException();
-                it
+                throw TestException()
             }
         }
 
@@ -173,9 +172,9 @@ class FlowWithTest : TestBase() {
             captured += captureName()
             emit(Unit)
             if (switch == 0) throw TestException()
-        }.map { if (switch == 1) throw TestException() else it }
+        }.map { if (switch == 1) throw TestException() else Unit }
             .flowWith(named("downstream")) {
-                map { if (switch == 2) throw TestException() else it }
+                map { if (switch == 2) throw TestException() else Unit }
             }
         repeat(3) {
             switch = it
@@ -198,7 +197,7 @@ class FlowWithTest : TestBase() {
                 invoked = true
             }
         }.flowWith(named("downstream")) {
-            map { it }
+            map { Unit }
         }
 
         val job = launch {

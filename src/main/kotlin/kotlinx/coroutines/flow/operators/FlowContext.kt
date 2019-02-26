@@ -109,11 +109,11 @@ private fun check(flowContext: CoroutineContext, bufferSize: Int) {
 }
 
 // TODO describe why we don't like this naming
-@Deprecated(level = DeprecationLevel.ERROR, message = "Use Flow.withUpstreamContext instead", replaceWith = ReplaceWith("withUpstreamContext(context)"))
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use flowWith or flowOn instead")
 public fun <T: Any> Flow<T>.subscribeOn(context: CoroutineContext): Flow<T> = TODO("Should not be called")
 
-@Deprecated(level = DeprecationLevel.ERROR, message = "Use Flow.withUpstreamContext instead", replaceWith = ReplaceWith("withDownstreamContext(context)"))
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use flowWith or flowOn instead")
 public fun <T: Any> Flow<T>.observeOn(context: CoroutineContext): Flow<T> = TODO("Should not be called")
 
-@Deprecated(level = DeprecationLevel.ERROR, message = "Use Flow.withUpstreamContext instead", replaceWith = ReplaceWith("withDownstreamContext(context)"))
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use flowWith or flowOn instead")
 public fun <T: Any> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = TODO("Should not be called")

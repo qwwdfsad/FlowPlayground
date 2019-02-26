@@ -13,7 +13,7 @@ class ToCollectionTest : TestBase() {
         }
     }
 
-    private val emptyFlow = flow<Int>()
+    private val emptyFlow = flowOf<Int>()
 
     @Test
     fun testToList() = runTest {

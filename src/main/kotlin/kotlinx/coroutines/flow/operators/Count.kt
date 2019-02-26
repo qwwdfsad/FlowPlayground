@@ -18,20 +18,20 @@ suspend fun main() {
 }
 
 private suspend fun example2() {
-    val f1 = flow(1).delayFlow(5000).map { println("Whoa"); it }
-    val f2 = flow(2).delayFlow(100).map {
+    val f1 = flowOf(1).delayFlow(5000).map { println("Whoa"); it }
+    val f2 = flowOf(2).delayFlow(100).map {
         error(":(")
         42
     }
 
-    flow(f1, f2).flatMap { it }.count().collect {
+    flowOf(f1, f2).flatMap { it }.count().collect {
         println("$it elements")
     }
 }
 
 
 private suspend fun throwingProducer() {
-    flow(1, 2, 3, 4).delayEach(100).count().collect {
+    flowOf(1, 2, 3, 4).delayEach(100).count().collect {
         println("$it elements")
     }
 }

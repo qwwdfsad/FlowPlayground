@@ -21,7 +21,7 @@ suspend fun <S: Any, T: S> Flow<T>.reduce(operation: suspend (acc: S, value: T) 
     return accumulator as S
 }
 
-inline suspend fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
+suspend inline fun <T : Any, R> Flow<T>.fold(initial: R, crossinline operation: suspend (acc: R, value: T) -> R): R {
     var accumulator = initial
     collect { value ->
         accumulator = operation(accumulator, value)
