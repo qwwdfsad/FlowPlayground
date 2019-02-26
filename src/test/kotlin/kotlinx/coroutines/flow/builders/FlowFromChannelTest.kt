@@ -1,7 +1,8 @@
-package kotlinx.coroutines.flow.sink
+package kotlinx.coroutines.flow.builders
 
 import examples.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
@@ -9,7 +10,7 @@ import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.test.*
 
-class FlowSinkTest {
+class FlowFromChannelTest {
 
     @Test
     fun testCompletableFuture() = runBlocking {
@@ -27,13 +28,13 @@ class FlowSinkTest {
         assertEquals(42, element)
     }
 
-    private class CallbackApi(val block: (FlowSink<Int>) -> Unit) {
+    private class CallbackApi(val block: (SendChannel<Int>) -> Unit) {
         var started = false
         @Volatile
         var stopped = false
         lateinit var thread: Thread
 
-        fun start(sink: FlowSink<Int>) {
+        fun start(sink: SendChannel<Int>) {
             started = true
             thread = thread {
                 while (!stopped) {
@@ -55,11 +56,9 @@ class FlowSinkTest {
         }
 
 
-        val flow = flowViaSink<Int> { sink ->
-            api.start(sink)
-            try {
-                sink.join()
-            } finally {
+        val flow = flowViaChannel<Int> { channel ->
+            api.start(channel)
+            channel.invokeOnClose {
                 api.stop()
             }
         }
@@ -93,13 +92,14 @@ class FlowSinkTest {
         var i = 0
         val api = CallbackApi {
             it.offer(++i)
-            if (i == 5) it.completeExceptionally(java.lang.RuntimeException())
+            if (i == 5) it.close(RuntimeException())
         }
 
-        val flow = flowViaSink<Int> { sink ->
-            api.start(sink)
-            sink.join()
-            api.stop()
+        val flow = flowViaChannel<Int> { channel ->
+            api.start(channel)
+            channel.invokeOnClose {
+                api.stop()
+            }
         }
 
         var received = 0

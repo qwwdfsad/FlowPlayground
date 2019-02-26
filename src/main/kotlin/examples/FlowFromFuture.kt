@@ -2,18 +2,18 @@ package examples
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.sink.*
+import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.concurrent.*
 
 // Though we do not recommend to do it :)
-fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = flowViaSink { sink ->
+fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = flowViaChannel { sink ->
     whenComplete { element, error ->
         if (error != null) {
-            sink.completeExceptionally(error)
+            sink.close(error)
         } else {
             require(sink.offer(element)) // Should always succeed
-            sink.complete()
+            sink.close()
         }
     }
 }

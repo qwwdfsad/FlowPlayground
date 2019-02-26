@@ -1,9 +1,10 @@
 package examples
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.operators.*
-import kotlinx.coroutines.flow.sink.*
 import kotlinx.coroutines.flow.terminal.*
 import kotlin.concurrent.*
 
@@ -18,21 +19,22 @@ interface Callback {
 }
 
 // This is the main entry point
-fun CallbackBasedApi.flow(): Flow<Int> = flowViaSink { sink ->
-    val adapter = FlowSinkAdapter(sink)
+fun CallbackBasedApi.flow(): Flow<Int> = flowViaChannel { channel ->
+    val adapter = FlowSinkAdapter(channel)
     register(adapter)
-    sink.join() // Join never throws, just waits until either producer or consumer finishes
-    unregister(adapter)
+    channel.invokeOnClose {
+        unregister(adapter)
+    }
 }
 
-private class FlowSinkAdapter(private val sink: FlowSink<Int>) : Callback {
+private class FlowSinkAdapter(private val sink: SendChannel<Int>) : Callback {
 
     override fun onNextEventFromExternalApi(event: Int) {
         sink.offer(event)
     }
 
     override fun onExceptionFromExternalApi(throwable: Throwable) {
-        sink.completeExceptionally(throwable)
+        sink.close(throwable)
     }
 }
 
