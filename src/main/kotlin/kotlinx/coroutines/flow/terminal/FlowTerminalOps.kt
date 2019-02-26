@@ -2,9 +2,9 @@
 
 package kotlinx.coroutines.flow.terminal
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.operators.*
-import java.util.concurrent.*
 
 suspend fun <S: Any, T: S> Flow<T>.reduce(operation: suspend (acc: S, value: T) -> S): S {
     var found = false

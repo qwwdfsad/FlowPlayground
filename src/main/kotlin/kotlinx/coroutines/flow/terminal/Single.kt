@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.operators.*
  * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
  * that contains more than one element.
  */
-public suspend fun <T: Any> Flow<T>.awaitSingle(): T {
+public suspend fun <T: Any> Flow<T>.single(): T {
     var result: T? = null
     collect {
         if (result != null) error("Expected only one element")

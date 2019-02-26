@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.*
 
-
 suspend fun <T : Any> Flow<T>.first(): T {
     var result: T? = null
     try {

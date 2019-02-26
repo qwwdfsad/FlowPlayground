@@ -9,17 +9,16 @@ import kotlin.test.*
 
 class FlowBuilderTest : TestBase() {
 
-
     @Test
     fun testWithContextDoesNotChangeExecution() = runTest {
-        val flow = flow(named("original")) {
+        val flow = flow {
             emit(captureName())
-        }
+        }.flowOn(named("original"))
 
-        var result: String = "unknown"
+        var result = "unknown"
         withContext(named("misc")) {
             flow
-                .withUpstreamContext(named("upstream"))
+                .flowOn(named("upstream"))
                 .consumeOn(named("consumer")) {
                     result = it
                 }.join()

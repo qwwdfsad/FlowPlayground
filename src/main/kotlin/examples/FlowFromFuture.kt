@@ -1,7 +1,7 @@
 package examples
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.sink.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.concurrent.*

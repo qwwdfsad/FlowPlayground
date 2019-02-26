@@ -11,10 +11,11 @@ fun <T : Any> Flow<T>.consumeOn(
     onComplete: suspend () -> Unit = {}, onNext: suspend (T) -> Unit
 ): Job = GlobalScope.launch(context) {
         try {
-            withDownstreamContext(context).collect(onNext)
+            collect(onNext)
             onComplete()
         } catch (e: Throwable) {
             onError(e)
+            // TODO
             coroutineContext.cancel()
         }
     }

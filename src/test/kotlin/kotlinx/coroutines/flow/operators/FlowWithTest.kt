@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import kotlin.test.*
 
-class FlowContextDownstreamTest : TestBase() {
+class FlowWithTest : TestBase() {
 
     private val captured = ArrayList<String>()
 
     @Test
-    fun testWithDownstreamContext() = runTest {
+    fun testFlowWith() = runTest {
         val captured = ArrayList<String>()
         val flow = flow {
             captured += captureName()
@@ -25,56 +25,65 @@ class FlowContextDownstreamTest : TestBase() {
             it
         }
 
-        val result = flow.withDownstreamContext(named("ctx1"))
-            .map(mapper)
-            .withDownstreamContext(named("ctx2"))
-            .map(mapper)
-            .awaitSingle()
+        val result = flow.flowWith(named("ctx1")) {
+            map(mapper)
+        }.flowWith(named("ctx2")) {
+            map(mapper)
+        }.map(mapper)
+            .single()
 
         assertEquals(314, result)
-        assertEquals(listOf("main", "ctx1", "ctx2"), captured)
+        assertEquals(listOf("main", "ctx1", "ctx2", "main"), captured)
     }
 
     @Test
-    public fun testWithDownstreamThrowingSource() = runTest {
+    public fun testFlowWithThrowingSource() = runTest {
         val flow = flow {
             emit(captureName())
             throw TestException()
-        }.map { it }.withDownstreamContext(named("throwing"))
+        }.flowWith(named("throwing")) {
+            map { it }
+        }
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    public fun testWithDownstreamThrowingOperator() = runTest {
+    public fun testFlowWithThrowingOperator() = runTest {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
-        }.map {
-            throw TestException();
-            it
-        }.withDownstreamContext(named("throwing"))
+        }.flowWith(named("throwing")) {
+            map {
+                throw TestException();
+                it
+            }
+        }
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    public fun testWithDownstreamThrowingDownstreamOperator() = runTest {
+    public fun testFlowWithThrowingDownstreamOperator() = runTest {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
-        }.map { it }
-            .withDownstreamContext(named("throwing"))
+        }.flowWith(named("throwing")) {
+            map { it }
+        }
             .map { throw TestException() }
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    fun testMultipleDownstreamContexts() = runTest() {
+    fun testMultipleFlowWith() = runTest() {
         val mapper: suspend (Unit) -> Unit = {
             captured += captureName()
         }
@@ -83,20 +92,29 @@ class FlowContextDownstreamTest : TestBase() {
             captured += captureName()
             emit(Unit)
         }.map(mapper)
-            .withDownstreamContext(named("downstream"))
+            .flowWith(named("downstream")) {
+                map(mapper)
+            }
+            .flowWith(named("downstream 2")) {
+                map(mapper)
+            }
+            .flowWith(named("downstream 3")) {
+                map(mapper)
+            }
             .map(mapper)
-            .withDownstreamContext(named("downstream2"))
-            .map(mapper)
-            .withDownstreamContext(named("downstream3"))
-            .map(mapper)
-            .withDownstreamContext(named("ignored"))
-            .awaitSingle()
+            .flowWith(named("downstream 4")) {
+                map(mapper)
+            }.flowWith(named("ignored")) { this }
+            .single()
 
-        assertEquals(listOf("main", "main", "downstream", "downstream2", "downstream3"), captured)
+        assertEquals(
+            listOf("main", "main", "downstream", "downstream 2", "downstream 3", "main", "downstream 4"),
+            captured
+        )
     }
 
     @Test
-    fun testDownstreamCancellation() = runTest {
+    fun testFlowWithCancellation() = runTest {
         val captured = ArrayList<String>()
         val latch = Channel<Unit>()
         val job = launch {
@@ -107,19 +125,22 @@ class FlowContextDownstreamTest : TestBase() {
                 } finally {
                     captured += captureName()
                 }
-            }
-                .withDownstreamContext(named("cancelled"))
-                .awaitSingle()
+            }.flowWith(named("cancelled")) {
+                    map { it
+                    }
+                }
+                .single()
         }
 
         latch.receive()
         job.cancel()
         job.join()
         assertEquals(listOf("main"), captured)
+        ensureActive()
     }
 
     @Test
-    fun testDownstreamCancellationHappensBefore() = runTest {
+    fun testFlowWithCancellationHappensBefore() = runTest {
         val order = ArrayList<Int>()
         launch {
             try {
@@ -135,7 +156,9 @@ class FlowContextDownstreamTest : TestBase() {
                     } finally {
                         order.add(3)
                     }
-                }.withDownstreamContext(named("downstream")).awaitSingle()
+                }.flowWith(named("downstream")) {
+                    map { it }
+                }
             } catch (e: CancellationException) {
                 order.add(4)
                 assertEquals(listOf(1, 2, 3, 4), order)
@@ -144,26 +167,25 @@ class FlowContextDownstreamTest : TestBase() {
     }
 
     @Test
-    fun testMultipleDownstreamContextsWithJobs() = runTest() {
+    fun testMultipleFlowWithException() = runTest() {
         var switch = 0
         val flow = flow {
             captured += captureName()
             emit(Unit)
             if (switch == 0) throw TestException()
         }.map { if (switch == 1) throw TestException() else it }
-            .withDownstreamContext(named("downstream") + Job())
-            .map { if (switch == 2) throw TestException() else it }
-            .withDownstreamContext(named("downstream2") + Job())
-
+            .flowWith(named("downstream")) {
+                map { if (switch == 2) throw TestException() else it }
+            }
         repeat(3) {
             switch = it
-            assertFailsWith<TestException> { flow.awaitSingle() }
+            assertFailsWith<TestException> { flow.single() }
             assertFailsWith<TestException>(flow)
         }
     }
 
     @Test(timeout = 1000L)
-    fun testMultipleDownstreamContextsWithJobsCancellation() = runTest {
+    fun testMultipleFlowWithJobsCancellation() = runTest {
         val latch = Channel<Unit>()
         var invoked = false
         val flow = flow {
@@ -175,14 +197,17 @@ class FlowContextDownstreamTest : TestBase() {
             } finally {
                 invoked = true
             }
-        }.map { it }.withDownstreamContext(named("downstream") + Job())
+        }.flowWith(named("downstream")) {
+            map { it }
+        }
 
         val job = launch {
-            flow.awaitSingle()
+            flow.single()
         }
 
         latch.receive()
         job.cancelAndJoin()
         assertTrue(invoked)
+        ensureActive()
     }
 }

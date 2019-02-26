@@ -17,10 +17,11 @@ interface Callback {
     fun onExceptionFromExternalApi(throwable: Throwable)
 }
 
+// This is the main entry point
 fun CallbackBasedApi.flow(): Flow<Int> = flowViaSink { sink ->
     val adapter = FlowSinkAdapter(sink)
     register(adapter)
-    sink.join() // Join never throws
+    sink.join() // Join never throws, just waits until either producer or consumer finishes
     unregister(adapter)
 }
 
@@ -53,21 +54,26 @@ object InfiniteApiInstance : CallbackBasedApi {
 
     override fun unregister(callback: Callback) {
         unregistered = true
-        println("Callback ${callback.javaClass.name} successfully unregistered")
+        println("Callback ${callback.javaClass.name} successfully unregistered from thread")
     }
 }
 
 suspend fun main() {
+    val mapperContext = newSingleThreadContext("Mapper")
     val consumptionContext = newSingleThreadContext("Consumer")
+
     val flow = InfiniteApiInstance.flow()
-        .map { it }
-        .withDownstreamContext(consumptionContext)
+        .map {
+            println("Mapping $it on ${Thread.currentThread()}")
+            it
+        }
+        .flowOn(mapperContext)
 
     println("Flow prepared")
     var elements = 0
-    flow.limit(10)
-        .consumeOn(consumptionContext, onError = { t -> println("Handling $t") }) { // CEH can be used as well
-            println("Received $it on thread ${Thread.currentThread()}")
+    flow.limit(3)
+        .consumeOn(consumptionContext, onError = { t -> println("Handling $t") }) {
+            println("Received $it on ${Thread.currentThread()}")
             if (++elements > 5) throw RuntimeException()
         }.join()
 }

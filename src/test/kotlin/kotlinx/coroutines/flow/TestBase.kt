@@ -3,6 +3,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 open class TestBase {
@@ -51,6 +52,11 @@ open class TestBase {
         return if (name.contains("%%")) name.substringAfter("%%").substringBefore("%%")
         else if (name.startsWith("main ")) "main"
         else name
+    }
+
+    protected suspend fun ensureActive() {
+        assertTrue(coroutineContext.isActive)
+        assertFalse(coroutineContext[Job]!!.isCancelled)
     }
 }
 

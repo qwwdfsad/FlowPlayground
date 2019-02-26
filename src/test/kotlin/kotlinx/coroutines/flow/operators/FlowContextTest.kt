@@ -1,6 +1,7 @@
 package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
@@ -23,38 +24,39 @@ class FlowContextTest : TestBase() {
             it
         }
 
-        val value = flow
-            .map(mapper)
-            .withUpstreamContext(named("upstream"))
-            .map(mapper)
-            .withDownstreamContext(named("downstream"))
-            .map(mapper)
-            .withUpstreamContext(named("ignored"))
-            .map(mapper)
-            .withDownstreamContext(named("downstream 2"))
-            .map(mapper)
-            .awaitSingle()
+        val value = flow // upstream
+            .map(mapper) // upstream
+            .flowOn(named("upstream"))
+            .map(mapper) // upstream 2
+            .flowWith(named("downstream")) {
+                map(mapper) // downstream
+            }
+            .flowOn(named("upstream 2"))
+            .map(mapper) // main
+            .single()
 
         assertEquals(314, value)
-        assertEquals(listOf("upstream", "upstream", "upstream", "downstream", "downstream", "downstream 2"), captured)
+        assertEquals(listOf("upstream", "upstream", "upstream 2", "downstream", "main"), captured)
     }
 
     @Test
     fun testExceptionReporting() = runTest {
-        val flow = flow(named("upstream")) {
+        val flow = flow {
             captured += captureName()
             emit(314)
             delay(Long.MAX_VALUE)
-        }.map {
-            throw TestException()
-        }.withDownstreamContext(named("downstream"))
+        }.flowOn(named("upstream"))
+            .map {
+                throw TestException()
+            }
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    fun testMixedContextAndException() = runTest {
+    fun testMixedContextsAndException() = runTest {
         val baseFlow = flow {
             captured += captureName()
             emit(314)
@@ -69,22 +71,76 @@ class FlowContextTest : TestBase() {
         }
 
         val flow = baseFlow.map(mapper) // 1
-            .withUpstreamContext(named("upstream"))
+            .flowOn(named("ctx 1"))
             .map(mapper) // 2
-            .withDownstreamContext(named("downstream"))
-            .map(mapper) // 3
-            .withUpstreamContext(named("upstream2"))
+            .flowWith(named("ctx 2")) {
+                map(mapper) // 3
+            }
             .map(mapper) // 4
-            .withDownstreamContext(named("downstream2"))
+            .flowOn(named("ctx 3"))
             .map(mapper) // 5
 
         repeat(5) {  // Will hang for 6
             state = 0
             needle = it + 1
-            assertFailsWith<TestException> { flow.awaitSingle() }
+            assertFailsWith<TestException> { flow.single() }
 
             state = 0
             assertFailsWith<TestException>(flow)
         }
+
+        ensureActive()
+    }
+
+    @Test
+    fun testNestedContexts() = runTest {
+        val mapper: suspend (Int) -> Int = { captured += captureName(); it }
+        val value = flow {
+            captured += captureName()
+            emit(1)
+        }.flowWith(named("outer")) {
+            map(mapper)
+                .flowOn(named("nested first"))
+                .flowWith(named("nested second")) {
+                    map(mapper)
+                        .flowOn(named("inner first"))
+                        .map(mapper)
+                }
+                .map(mapper)
+        }.map(mapper)
+            .single()
+        val expected = listOf("main", "nested first", "inner first", "nested second", "outer", "main")
+        assertEquals(expected, captured)
+        assertEquals(1, value)
+    }
+
+
+    @Test
+    fun testFlowContextCancellation() = runTest {
+        val latch = Channel<Unit>()
+        var invoked = false
+        val flow = flow {
+            try {
+                emit(1)
+            } finally {
+                invoked = true
+            }
+        }.flowWith(named("outer")) {
+            map { it }
+                .flowOn(named("inner"))
+
+        }.map {
+            latch.send(Unit)
+            delay(Long.MAX_VALUE)
+        }.flowOn(named("delayed"))
+
+        val job = launch {
+            flow.single()
+        }
+
+        latch.receive()
+        job.cancelAndJoin()
+        assertTrue(invoked)
+        ensureActive()
     }
 }

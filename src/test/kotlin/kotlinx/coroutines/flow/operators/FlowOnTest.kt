@@ -8,24 +8,24 @@ import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import kotlin.test.*
 
-class FlowContextUpstreamTest : TestBase() {
+class FlowOnTest : TestBase() {
 
     private val captured = ArrayList<String>()
 
     @Test
-    fun testUpstreamContext() = runTest {
+    fun testFlowOn() = runTest {
         val source = Source(42)
         val consumer = Consumer(42)
 
         val flow = source::produce.flow()
-        flow.withUpstreamContext(named("ctx1")).consumeOn(coroutineContext) {
+        flow.flowOn(named("ctx1")).consumeOn(coroutineContext) {
             consumer.consume(it)
         }.join()
 
         assertEquals("ctx1", source.contextName)
         assertEquals("main", consumer.contextName)
 
-        flow.withUpstreamContext(named("ctx2")).consumeOn(coroutineContext) {
+        flow.flowOn(named("ctx2")).consumeOn(coroutineContext) {
             consumer.consume(it)
         }.join()
 
@@ -34,7 +34,7 @@ class FlowContextUpstreamTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamContextAndOperators() = runTest {
+    fun testFlowOnAndOperators() = runTest {
         val source = Source(42)
         val consumer = Consumer(42)
         val captured = ArrayList<String>()
@@ -45,122 +45,111 @@ class FlowContextUpstreamTest : TestBase() {
 
         val flow = source::produce.flow()
         flow.map(mapper)
-            .withUpstreamContext(named("ctx1"))
+            .flowOn(named("ctx1"))
             .map(mapper)
-            .withUpstreamContext(named("ctx2"))
+            .flowOn(named("ctx2"))
             .map(mapper)
             .consumeOn(coroutineContext) {
                 consumer.consume(it)
             }.join()
 
-        assertEquals(listOf("ctx1", "ctx1", "ctx1"), captured)
+        assertEquals(listOf("ctx1", "ctx2", "main"), captured)
         assertEquals("ctx1", source.contextName)
         assertEquals("main", consumer.contextName)
     }
 
     @Test
-    fun testFlowBuilderWithUpstream() = runTest {
-        val result = flow(named("upstream")) { emit(captureName()) }
-            .map {
-                assertEquals("upstream", it)
-                assertEquals("upstream", captureName())
-                it
-            }.withUpstreamContext(named("bar"))
-            .map {
-                assertEquals("upstream", it)
-                assertEquals("upstream", captureName())
-                it
-            }.awaitSingle()
-
-        assertEquals("upstream", result)
-    }
-
-    @Test
-    public fun testWithUpstreamThrowingSource() = runTest {
+    public fun testFlowOnThrowingSource() = runTest {
         val flow = flow {
             emit(captureName())
             throw TestException()
-        }
+        }.map { it }.flowOn(named("throwing"))
 
-        assertFailsWith<TestException> { flow.map { it }.withUpstreamContext(named("throwing")).awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
+        assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    public fun testWithUpstreamThrowingOperator() = runTest {
+    public fun testFlowOnThrowingOperator() = runTest {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
         }.map {
             throw TestException(); it
-        }.withUpstreamContext(named("throwing"))
+        }.flowOn(named("throwing"))
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    public fun testWithUpstreamThrowingDownstreamOperator() = runTest {
+    public fun testFlowOnDownstreamOperator() = runTest {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
         }.map {
             it
-        }.withUpstreamContext(named("throwing"))
+        }.flowOn(named("throwing"))
             .map { throw TestException() }
 
-        assertFailsWith<TestException> { flow.awaitSingle() }
+        assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)
+        ensureActive()
     }
 
     @Test
-    public fun testWithUpstreamThrowingConsumer() = runTest {
+    public fun testFlowOnThrowingConsumer() = runTest {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
         }
 
         var success = false
-        flow.withUpstreamContext(named("...")).consumeOn(Dispatchers.Unconfined, onError = { success = it is TestException }) {
+        flow.flowOn(named("...")).consumeOn(Dispatchers.Unconfined, onError = { success = it is TestException }) {
             throw TestException()
         }.join()
 
         assertTrue(success)
+        ensureActive()
     }
 
     @Test(expected = IllegalStateException::class)
-    fun testContextWithJob() = runTest {
+    fun testFlowOnWithJob() = runTest {
         flow(named("foo") + Job()) {
             emit(1)
         }
     }
 
     @Test
-    fun testUpstreamCancellation() = runTest {
+    fun testFlowOnCancellation() = runTest {
         val captured = ArrayList<String>()
         val latch = Channel<Unit>()
         val job = launch {
-            flow<Int>(named("cancelled")) {
+            flow<Int> {
                 try {
                     latch.send(Unit)
                     delay(Long.MAX_VALUE)
                 } finally {
                     captured += captureName()
                 }
-            }.awaitSingle()
+            }.flowOn(named("cancelled")).single()
         }
 
         latch.receive()
         job.cancel()
         job.join()
         assertEquals(listOf("cancelled"), captured)
+        ensureActive()
     }
 
     @Test
-    fun testUpstreamCancellationHappensBefore() = runTest {
+    fun testFlowOnCancellationHappensBefore() = runTest {
         val order = ArrayList<Int>()
         launch {
             try {
-                flow<Int>(named("upstream")) {
+                flow<Int> {
                     try {
                         order.add(1)
                         val flowJob = kotlin.coroutines.coroutineContext[Job]!!
@@ -172,12 +161,13 @@ class FlowContextUpstreamTest : TestBase() {
                     } finally {
                         order.add(3)
                     }
-                }.awaitSingle()
+                }.flowOn(named("upstream")).single()
             } catch (e: CancellationException) {
                 order.add(4)
                 assertEquals(listOf(1, 2, 3, 4), order)
             }
         }.join()
+        ensureActive()
     }
 
     @Test
@@ -188,30 +178,30 @@ class FlowContextUpstreamTest : TestBase() {
         }.map {
             captured += captureName()
             it
-        }.withUpstreamContext(named("base"))
+        }.flowOn(named("base"))
             .map {
                 captured += captureName()
                 it
-            }.awaitSingle()
+            }.single()
 
         assertEquals(-239, value)
-        assertEquals(listOf("base", "base", "base"), captured)
+        assertEquals(listOf("base", "base", "main"), captured)
     }
 
     @Test
-    fun testMultipleUpstreamContexts() = runTest {
+    fun testMultipleFlowOn() = runTest {
         flow {
             emit(1)
             captured += captureName()
         }.map { captured += captureName() }
-            .withUpstreamContext(named("expected"))
+            .flowOn(named("ctx1"))
             .map { captured += captureName() }
-            .withUpstreamContext(named("ignored"))
+            .flowOn(named("ctx2"))
             .map { captured += captureName() }
-            .withUpstreamContext(named("ignored2"))
+            .flowOn(named("ctx3"))
             .map { captured += captureName() }
-            .awaitSingle()
-        assertEquals(List(5) { "expected" }, captured)
+            .single()
+        assertEquals(listOf("ctx1", "ctx1", "ctx2", "ctx3", "main"), captured)
     }
 
     private inner class Source(private val value: Int) {

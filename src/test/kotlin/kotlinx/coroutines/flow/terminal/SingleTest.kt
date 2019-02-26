@@ -11,7 +11,7 @@ class SingleTest : TestBase() {
     fun testSingle() = runTest {
         val result = flow {
             emit(239L)
-        }.awaitSingle()
+        }.single()
 
         assertEquals(239L, result)
     }
@@ -22,14 +22,14 @@ class SingleTest : TestBase() {
             flow {
                 emit(239L)
                 emit(240L)
-            }.awaitSingle()
+            }.single()
         }
     }
 
     @Test
     fun testNoValues() = runTest {
         assertFailsWith<NoSuchElementException> {
-            flow<Int> {}.awaitSingle()
+            flow<Int> {}.single()
         }
     }
 
@@ -38,14 +38,14 @@ class SingleTest : TestBase() {
         assertFailsWith<TestException> {
             flow<Int> {
                 throw TestException()
-            }.awaitSingle()
+            }.single()
         }
 
         assertFailsWith<TestException> {
             flow {
                 emit(1)
                 throw TestException()
-            }.awaitSingle()
+            }.single()
         }
     }
 }
