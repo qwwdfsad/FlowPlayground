@@ -3,6 +3,7 @@
 package kotlinx.coroutines.flow.builders
 
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.operators.*
 import kotlin.experimental.*
 
 /**
@@ -23,8 +24,19 @@ import kotlin.experimental.*
  * }
  * ```
  */
-public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit) = object : Flow<T> {
-    override suspend fun collect(collector: FlowCollector<T>) = collector.block()
+public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+    return object : Flow<T> {
+        override suspend fun collect(collector: FlowCollector<T>) = collector.block()
+    }
+}
+
+// Crossinline bugs :(
+public fun <T : Any, R : Any> Flow<T>.transform(@BuilderInference block: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
+    return flow {
+        collect { value ->
+            block(value)
+        }
+    }
 }
 
 /**

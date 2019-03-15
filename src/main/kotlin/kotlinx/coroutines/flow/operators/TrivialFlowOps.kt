@@ -20,12 +20,7 @@ fun <T : Any> Flow<T>.filter(predicate: suspend (T) -> Boolean): Flow<T> =
         }
     }
 
-fun <T : Any, R : Any> Flow<T>.map(transform: suspend (T) -> R): Flow<R> =
-    flow {
-        collect { value ->
-            emit(transform(value))
-        }
-    }
+fun <T : Any, R : Any> Flow<T>.map(transformer: suspend (T) -> R): Flow<R> = transform { value -> emit(transformer(value)) }
 
 fun <T : Any> Flow<T>.delayFlow(millis: Long): Flow<T> =
     flow {
