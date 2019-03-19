@@ -13,7 +13,7 @@ class FlowWithTest : TestBase() {
     private val captured = ArrayList<String>()
 
     @Test
-    fun testFlowWith() = runTest {
+    fun testFlowWith() = runTest("main") {
         val captured = ArrayList<String>()
         val flow = flow {
             captured += captureName()
@@ -37,7 +37,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    public fun testFlowWithThrowingSource() = runTest {
+    public fun testFlowWithThrowingSource() = runTest("main") {
         val flow = flow {
             emit(captureName())
             throw TestException()
@@ -51,7 +51,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    public fun testFlowWithThrowingOperator() = runTest {
+    public fun testFlowWithThrowingOperator() = runTest("main") {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
@@ -67,7 +67,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    public fun testFlowWithThrowingDownstreamOperator() = runTest {
+    public fun testFlowWithThrowingDownstreamOperator() = runTest("main") {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
@@ -82,7 +82,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    fun testMultipleFlowWith() = runTest() {
+    fun testMultipleFlowWith() = runTest("main") {
         val mapper: suspend (Unit) -> Unit = {
             captured += captureName()
         }
@@ -113,7 +113,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    fun testFlowWithCancellation() = runTest {
+    fun testFlowWithCancellation() = runTest("main") {
         val captured = ArrayList<String>()
         val latch = Channel<Unit>()
         val job = launch {
@@ -133,7 +133,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    fun testFlowWithCancellationHappensBefore() = runTest {
+    fun testFlowWithCancellationHappensBefore() = runTest("main") {
         val order = ArrayList<Int>()
         launch {
             try {
@@ -156,7 +156,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test
-    fun testMultipleFlowWithException() = runTest() {
+    fun testMultipleFlowWithException() = runTest("main") {
         var switch = 0
         val flow = flow {
             captured += captureName()
@@ -174,7 +174,7 @@ class FlowWithTest : TestBase() {
     }
 
     @Test(timeout = 1000L)
-    fun testMultipleFlowWithJobsCancellation() = runTest {
+    fun testMultipleFlowWithJobsCancellation() = runTest("main") {
         val latch = Channel<Unit>()
         var invoked = false
         val flow = flow {

@@ -13,7 +13,7 @@ class FlowContextTest : TestBase() {
     private val captured = ArrayList<String>()
 
     @Test
-    fun testMixedContext() = runTest {
+    fun testMixedContext() = runTest("main") {
         val flow = flow {
             captured += captureName()
             emit(314)
@@ -40,7 +40,7 @@ class FlowContextTest : TestBase() {
     }
 
     @Test
-    fun testExceptionReporting() = runTest {
+    fun testExceptionReporting() = runTest("main") {
         val flow = flow {
             captured += captureName()
             emit(314)
@@ -56,7 +56,7 @@ class FlowContextTest : TestBase() {
     }
 
     @Test
-    fun testMixedContextsAndException() = runTest {
+    fun testMixedContextsAndException() = runTest("main") {
         val baseFlow = flow {
             captured += captureName()
             emit(314)
@@ -93,7 +93,7 @@ class FlowContextTest : TestBase() {
     }
 
     @Test
-    fun testNestedContexts() = runTest {
+    fun testNestedContexts() = runTest("main") {
         val mapper: suspend (Int) -> Int = { captured += captureName(); it }
         val value = flow {
             captured += captureName()
@@ -116,7 +116,7 @@ class FlowContextTest : TestBase() {
 
 
     @Test
-    fun testFlowContextCancellation() = runTest {
+    fun testFlowContextCancellation() = runTest("main") {
         val latch = Channel<Unit>()
         var invoked = false
         val flow = flow {

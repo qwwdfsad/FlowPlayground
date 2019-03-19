@@ -15,16 +15,19 @@ open class TestBase {
         contexts.clear()
     }
 
-    protected fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking(named("main")) {
-        block()
-        try {
-            assert(isActive)
-            val job = coroutineContext[Job]!!
-            assertTrue(job.isActive)
-            assertTrue(!job.isCancelled)
-            yield()
-        } catch (e: Throwable) {
-            fail("Should not be cancelled")
+    protected fun runTest(context: String? = null, block: suspend CoroutineScope.() -> Unit) {
+        val ctx = if (context == null) EmptyCoroutineContext else named(context)
+        runBlocking(ctx) {
+            block()
+            try {
+                assert(isActive)
+                val job = coroutineContext[Job]!!
+                assertTrue(job.isActive)
+                assertTrue(!job.isCancelled)
+                yield()
+            } catch (e: Throwable) {
+                fail("Should not be cancelled")
+            }
         }
     }
 

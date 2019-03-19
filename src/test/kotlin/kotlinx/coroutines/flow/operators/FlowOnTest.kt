@@ -13,7 +13,7 @@ class FlowOnTest : TestBase() {
     private val captured = ArrayList<String>()
 
     @Test
-    fun testFlowOn() = runTest {
+    fun testFlowOn() = runTest("main") {
         val source = Source(42)
         val consumer = Consumer(42)
 
@@ -34,7 +34,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnAndOperators() = runTest {
+    fun testFlowOnAndOperators() = runTest("main") {
         val source = Source(42)
         val consumer = Consumer(42)
         val captured = ArrayList<String>()
@@ -59,7 +59,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingSource() = runTest {
+    public fun testFlowOnThrowingSource() = runTest("main") {
         val flow = flow {
             emit(captureName())
             throw TestException()
@@ -71,7 +71,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingOperator() = runTest {
+    public fun testFlowOnThrowingOperator() = runTest("main") {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
@@ -85,7 +85,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnDownstreamOperator() = runTest {
+    public fun testFlowOnDownstreamOperator() = runTest("main") {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
@@ -100,7 +100,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingConsumer() = runTest {
+    public fun testFlowOnThrowingConsumer() = runTest("main") {
         val flow = flow {
             emit(captureName())
             delay(Long.MAX_VALUE)
@@ -117,14 +117,14 @@ class FlowOnTest : TestBase() {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun testFlowOnWithJob() = runTest {
+    fun testFlowOnWithJob() = runTest("main") {
         flow {
             emit(1)
         }.flowOn(named("foo") + Job())
     }
 
     @Test
-    fun testFlowOnCancellation() = runTest {
+    fun testFlowOnCancellation() = runTest("main") {
         val captured = ArrayList<String>()
         val latch = Channel<Unit>()
         val job = launch {
@@ -142,7 +142,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnCancellationHappensBefore() = runTest {
+    fun testFlowOnCancellationHappensBefore() = runTest("main") {
         val order = ArrayList<Int>()
         launch {
             try {
@@ -165,7 +165,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testIndependentOperatorContext() = runTest {
+    fun testIndependentOperatorContext() = runTest("main") {
         val value = flow {
             captured += captureName()
             emit(-239)
@@ -183,7 +183,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testMultipleFlowOn() = runTest {
+    fun testMultipleFlowOn() = runTest("main") {
         flow {
             emit(1)
             captured += captureName()
