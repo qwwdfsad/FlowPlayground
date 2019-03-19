@@ -16,9 +16,14 @@ class PublisherAsFlowTest {
 
         Flux.fromArray(Array(100) { it }).doOnCancel {
             ++onCancelled
-        }.asFlow().consumeOn(Dispatchers.Unconfined, onError = { ++onError; println(it) }) {
-            ++onNext
-            throw RuntimeException()
+        }.asFlow().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+            onEach {
+                ++onNext
+                throw RuntimeException()
+            }
+            catch<Throwable> {
+                ++onError
+            }
         }.join()
 
         assertEquals(1, onNext)

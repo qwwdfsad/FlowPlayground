@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 
-fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
+public fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
     require(count > 0) { "limit count should be positive, but had $count" }
     return flow {
         var consumed = 0
@@ -19,12 +19,12 @@ fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
                 }
             }
         } catch (e: FlowConsumerAborted) {
-            // Do nothing
+            // Do nothing TODO
         }
     }
 }
 
-fun <T : Any> Flow<T>.skip(count: Int): Flow<T> {
+public fun <T : Any> Flow<T>.skip(count: Int): Flow<T> {
     require(count >= 0) { "skip count should be non-negative, but had $count" }
     return flow {
         var skipped = 0

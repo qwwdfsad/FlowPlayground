@@ -28,28 +28,28 @@ fun <T : Any> Flow<T>.asChannel(): BroadcastChannel<T> = GlobalScope.broadcast(D
         send(value)
     }
 }
-
-suspend fun main() {
-    val bc = GlobalScope.broadcast {
-        var i = 0
-        while (true) {
-            send(++i)
-            delay(20)
-        }
-    }
-
-    val flow = bc.asFlow().limit(10).filter { it % 2 == 0 }
-    println("Flow prepared, sleeping for 100 ms")
-    delay(100)
-
-    flow.consumeOn(Dispatchers.Unconfined) {
-        println(it)
-    }.join()
-
-    println("Flow consumed, sleeping 100 ms more")
-    delay(100)
-    println("Starting to consume flow again")
-    flow.consumeOn(Dispatchers.Unconfined) {
-        println(it)
-    }.join()
-}
+//
+//suspend fun main() {
+//    val bc = GlobalScope.broadcast {
+//        var i = 0
+//        while (true) {
+//            send(++i)
+//            delay(20)
+//        }
+//    }
+//
+//    val flow = bc.asFlow().limit(10).filter { it % 2 == 0 }
+//    println("Flow prepared, sleeping for 100 ms")
+//    delay(100)
+//
+//    flow.consumeOn(Dispatchers.Unconfined) {
+//        println(it)
+//    }.join()
+//
+//    println("Flow consumed, sleeping 100 ms more")
+//    delay(100)
+//    println("Starting to consume flow again")
+//    flow.consumeOn(Dispatchers.Unconfined) {
+//        println(it)
+//    }.join()
+//}

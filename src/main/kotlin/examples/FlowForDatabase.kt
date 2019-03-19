@@ -4,17 +4,13 @@ import examples.IntDao.Companion.IO
 import examples.IntDao.Companion.Main
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.builders.*
+import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 
 /**
  * This example shows how to create a Flow-based API for database client,
  * no matter whether it is a suspend-based one or blocking.
- *
- * Note that this example exists mostly for compatibility purpose and we do not recommend
- * to expose database API in the form of flows instead of regular suspend functions.
- *
  */
 interface IntDao {
 
@@ -29,16 +25,14 @@ interface IntDao {
     /**
      * Returns flow that emits one int associated with given key.
      *
-     * API user should use `withUpstreamContext` in order to choose
-     * where API will be invoked
+     * API user should use `flowOn` in order to choose where actual I/O call will be invoked
      */
     fun readInt(key: String): Flow<Int>
 
     /**
      * Returns flow that emits one int associated with given key.
      *
-     * This API is configured to be used with [IO] by default and is a shorthand for:
-     * `readInt(key).withUpstreamContext(IO)]
+     * This API is configured to be used with [IO] by default and is a shorthand for: `readInt(key).flowOn(IO)`
      */
     fun readIntWithIoConvention(key: String): Flow<Int>
 }
@@ -50,32 +44,41 @@ object IntDaoImpl : IntDao {
         emit(42)
     }
 
-    override fun readIntWithIoConvention(key: String): Flow<Int> =
-        flow {
-            println("Doing blocking call in thread: ${Thread.currentThread()}")
-            Thread.sleep(100)
-            emit(42)
-        }.flowOn(IO)
+    override fun readIntWithIoConvention(key: String): Flow<Int> = readInt(key).flowOn(IO)
 }
 
 
 suspend fun main() {
+    val mainScope = CoroutineScope(Main)
     println("Sample 1: missing 'flowOn' usage:")
     IntDaoImpl.readInt("foo")
-        .consumeOn(Main) {
-            println("Received $it on thread ${Thread.currentThread()}")
+        .launchIn(mainScope) {
+            onEach {
+                println("Received $it on thread ${Thread.currentThread()}")
+            }
         }.join()
 
     println("\nSample 2: with 'flowOn':")
     IntDaoImpl.readInt("foo")
         .flowOn(IO)
-        .consumeOn(Main) {
-            println("Received $it on thread ${Thread.currentThread()}")
+        .launchIn(mainScope) {
+            onEach {
+                println("Received $it on thread ${Thread.currentThread()}")
+            }
         }.join()
 
     println("\nSample 3: with convention:")
     IntDaoImpl.readIntWithIoConvention("foo")
-        .consumeOn(Main) {
-            println("Received $it on thread ${Thread.currentThread()}")
+        .launchIn(mainScope) {
+            onEach {
+                println("Received $it on thread ${Thread.currentThread()}")
+            }
         }.join()
+
+    println("\nSample 3: with convention and without launch + join:")
+    withContext(Main) {
+        IntDaoImpl.readIntWithIoConvention("foo").collect {
+            println("Received $it on thread ${Thread.currentThread()}")
+        }
+    }
 }

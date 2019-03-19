@@ -18,15 +18,15 @@ class FlowOnTest : TestBase() {
         val consumer = Consumer(42)
 
         val flow = source::produce.asFlow()
-        flow.flowOn(named("ctx1")).consumeOn(coroutineContext) {
-            consumer.consume(it)
+        flow.flowOn(named("ctx1")).launchIn(this) {
+            onEach { consumer.consume(it)}
         }.join()
 
         assertEquals("ctx1", source.contextName)
         assertEquals("main", consumer.contextName)
 
-        flow.flowOn(named("ctx2")).consumeOn(coroutineContext) {
-            consumer.consume(it)
+        flow.flowOn(named("ctx2")).launchIn(this) {
+            onEach { consumer.consume(it) }
         }.join()
 
         assertEquals("ctx2", source.contextName)
@@ -49,8 +49,8 @@ class FlowOnTest : TestBase() {
             .map(mapper)
             .flowOn(named("ctx2"))
             .map(mapper)
-            .consumeOn(coroutineContext) {
-                consumer.consume(it)
+            .launchIn(this) {
+                onEach { consumer.consume(it)}
             }.join()
 
         assertEquals(listOf("ctx1", "ctx2", "main"), captured)
@@ -107,8 +107,9 @@ class FlowOnTest : TestBase() {
         }
 
         var success = false
-        flow.flowOn(named("...")).consumeOn(Dispatchers.Unconfined, onError = { success = it is TestException }) {
-            throw TestException()
+        flow.flowOn(named("...")).launchIn(this + Dispatchers.Unconfined) {
+            onEach { throw TestException() }
+            catch<Throwable> { success = it is TestException }
         }.join()
 
         assertTrue(success)

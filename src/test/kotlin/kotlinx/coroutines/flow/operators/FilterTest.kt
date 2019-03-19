@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
+import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import kotlin.test.*
 
@@ -45,7 +46,7 @@ class FilterTest : TestBase() {
             true
         }.onErrorReturn(42)
 
-        assertEquals(42, flow.first())
+        assertEquals(42, flow.single())
         assertTrue(cancelled)
     }
 }

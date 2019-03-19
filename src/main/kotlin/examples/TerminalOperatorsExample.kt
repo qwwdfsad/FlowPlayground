@@ -7,16 +7,21 @@ import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.*
+import kotlin.system.*
 
+/**
+ * Example of how to write your own terminal operators
+ */
 suspend fun <T : Any> Flow<T>.first(): T {
     var result: T? = null
-    try {
+    return try {
         collect { value ->
             result = value
+            throw FlowConsumerAborted()
         }
-        return result ?: throw NoSuchElementException("Flow is empty")
+        result ?: throw NoSuchElementException("Flow is empty")
     } catch (e: FlowConsumerAborted) {
-        return result!!
+        result ?: error("Flow was empty")
     }
 }
 
@@ -34,13 +39,18 @@ suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }
 
 suspend fun main() {
     val flow = flow {
-        println("Computing sequence in CPU thread")
-        repeat(Int.MAX_VALUE) {
-            emit(it)
-            if (it > 4) println("Whoa, should not happen!")
-        }
-    }.flowOn(Dispatchers.Default, bufferSize = Channel.RENDEZVOUS) // Play with it and spot the difference
+        emit(1)
+        delay(1000)
+        // Note that this one will not be printed for first
+        println("Emitting after delay")
+        emit(2)
+    }
 
-    val sum = flow.limit(5).sum()
-    println("Sum: $sum")
+    println("'first' example:")
+    val ms = measureTimeMillis { flow.first() }
+    println("First element in $ms ms\n\n")
+
+    println("'last' example:")
+    val ms2 = measureTimeMillis { flow.last() }
+    println("Last element in $ms2 ms")
 }

@@ -20,10 +20,16 @@ fun <T : Any> CompletableFuture<T>.flow(): Flow<T> = flowViaChannel { sink ->
 
 suspend fun main() {
     val future = CompletableFuture<Int>()
-    val job = future.flow().consumeOn(Dispatchers.Unconfined, onComplete = { println("Done") }) {
-        println("Received $it")
+    val job = future.flow().launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+        onEach {
+            println("Received $it")
+        }
+        finally {
+            println("Done")
+        }
     }
 
+    println("Launched flow consumption, but future is not yet completed")
     Thread.sleep(500)
     future.complete(42)
     Thread.sleep(500)

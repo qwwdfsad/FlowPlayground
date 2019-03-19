@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
 import kotlin.test.*
 
-class FlowBuilderTest : TestBase() {
+class FlowInvariantsTest : TestBase() {
 
     @Test
     fun testWithContextDoesNotChangeExecution() = runTest {
@@ -19,8 +19,10 @@ class FlowBuilderTest : TestBase() {
         withContext(named("misc")) {
             flow
                 .flowOn(named("upstream"))
-                .consumeOn(named("consumer")) {
-                    result = it
+                .launchIn(this + named("consumer")) {
+                    onEach {
+                        result = it
+                    }
                 }.join()
         }
 

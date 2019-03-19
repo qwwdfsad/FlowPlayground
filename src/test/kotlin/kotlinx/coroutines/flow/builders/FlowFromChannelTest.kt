@@ -15,11 +15,11 @@ class FlowFromChannelTest {
     @Test
     fun testCompletableFuture() = runBlocking {
         val future = CompletableFuture<Int>()
-
         var element = -1
         var isDone = false
-        val job = future.flow().consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }) {
-            element = it
+        val job = future.flow().launchIn(this) {
+            onEach { element = it }
+            finally { isDone = true }
         }
 
         future.complete(42)
@@ -52,7 +52,7 @@ class FlowFromChannelTest {
     fun testThrowingConsumer() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.offer(++i)
+            runCatching {  it.offer(++i) }
         }
 
 
@@ -68,19 +68,22 @@ class FlowFromChannelTest {
         var exception: Throwable? = null
         val job = flow
             .filter { it > 10 }
-            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onError = { exception = it }) {
-                if (it == 11) {
-                    ++receivedConsensus
-                } else {
-                    receivedConsensus = 42
+            .launchIn(this) {
+                onEach {
+                    if (it == 11) {
+                        ++receivedConsensus
+                    } else {
+                        receivedConsensus = 42
+                    }
+                    throw RuntimeException()
                 }
-                throw RuntimeException()
+                catch<Throwable> { exception = it }
+                finally { isDone = true }
             }
-
         job.join()
         assertEquals(1, receivedConsensus)
-        assertFalse(isDone)
-        assertTrue { exception is java.lang.RuntimeException }
+        assertTrue(isDone)
+        assertTrue { exception is RuntimeException }
 
         assertTrue(api.started)
         assertTrue(api.stopped)
@@ -105,13 +108,14 @@ class FlowFromChannelTest {
         var received = 0
         var isDone = false
         var exception: Throwable? = null
-        val job = flow
-            .consumeOn(Dispatchers.Unconfined, onComplete = { isDone = true }, onError = { exception = it }) {
-                ++received
-            }
+        val job = flow.launchIn(this) {
+            onEach { ++received }
+            catch<Throwable> { exception = it }
+            finally { isDone = true }
+        }
 
         job.join()
-        assertFalse(isDone)
+        assertTrue(isDone)
         assertTrue { exception is java.lang.RuntimeException }
 
         assertTrue(api.started)

@@ -40,9 +40,18 @@ open class TestBase {
     protected suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) {
         var e: Throwable? = null
         var completed = false
-        flow.consumeOn(Dispatchers.Unconfined, onError = { e = it }, onComplete = { completed = true }, onNext = {}).join()
+        flow.launchIn(CoroutineScope(Dispatchers.Unconfined)) {
+            onEach {}
+            catch<Throwable> {
+                e = it
+            }
+            finally {
+                completed = true
+                assertTrue(it is T)
+            }
+        }.join()
         assertTrue(e is T)
-        assertFalse(completed)
+        assertTrue(completed)
     }
 
     protected fun named(name: String) = newSingleThreadContext("%%$name%%").also { contexts.add(it) }

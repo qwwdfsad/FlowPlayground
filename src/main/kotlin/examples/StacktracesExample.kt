@@ -2,14 +2,13 @@ package examples
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.builders.*
+import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 
-fun eliminateTailCall() {
-
-}
-
+/**
+ * Simple example that shows how exceptions are printed with debug mode enabled
+ */
 fun generate(): Flow<Int> {
     return flow {
         emit(1)
@@ -22,8 +21,9 @@ fun generate(): Flow<Int> {
         eliminateTailCall()
     }
 }
+fun eliminateTailCall() {}
 
-private fun doAsyncPush() {
+fun doAsyncPush() {
     error("Exception with a weird stacktrace")
 }
 
@@ -32,8 +32,11 @@ private suspend fun throwingProducer() {
         .flowOn(newSingleThreadContext("upstream ctx 1"))
         .map { it }
         .flowOn(newSingleThreadContext("upstream ctx 2"))
-        .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
-            println("You will see me once")
+        .launchIn(GlobalScope + newSingleThreadContext("downstream ctx 1")) {
+            onEach { println("You will see me once") }
+            catch<Throwable> {
+                it.printStackTrace()
+            }
         }.join()
 }
 
@@ -42,13 +45,17 @@ private suspend fun throwingOperator() {
         .flowOn(newSingleThreadContext("upstream ctx 1"))
         .map { error("foo") }
         .flowOn(newSingleThreadContext("upstream ctx 2"))
-        .consumeOn(newSingleThreadContext("downstream ctx 1"), onError = { it.printStackTrace() }) {
-            println("You will never see me")
+        .launchIn(GlobalScope + newSingleThreadContext("downstream ctx 1")) {
+            onEach { println("You will never see me") }
+            catch<Throwable> {
+                it.printStackTrace()
+            }
         }.join()
 }
 
 suspend fun main() {
-    // Run with -ea, add inline to flow and collect methods
+    // TODO KT-XXXXX :(
+    // Run with -ea in order to enable debug mode, (add inline to flow and collect methods)
     throwingProducer()
     System.err.println("\n\n")
     throwingOperator()
