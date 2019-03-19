@@ -49,15 +49,26 @@ open class TestBase {
 
     protected fun captureName(): String {
         val name = Thread.currentThread().name
-        return if (name.contains("%%")) name.substringAfter("%%").substringBefore("%%")
-        else if (name.startsWith("main ")) "main"
-        else name
+        return when {
+            name.contains("%%") -> name.substringAfter("%%").substringBefore("%%")
+            name.startsWith("main ") -> "main"
+            else -> name
+        }
     }
 
     protected suspend fun ensureActive() {
         assertTrue(coroutineContext.isActive)
         assertFalse(coroutineContext[Job]!!.isCancelled)
     }
+
+    protected suspend inline fun hang(onCancellation: () -> Unit) {
+        try {
+            suspendCancellableCoroutine<Unit> { }
+        } finally {
+            onCancellation()
+        }
+
+    }
 }
 
-class TestException() : Throwable()
+class TestException : Throwable()

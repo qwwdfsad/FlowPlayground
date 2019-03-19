@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 import org.junit.Test
-import java.lang.IllegalArgumentException
 import kotlin.test.*
 
 class FlowOnTest : TestBase() {
@@ -129,12 +128,8 @@ class FlowOnTest : TestBase() {
         val latch = Channel<Unit>()
         val job = launch {
             flow<Int> {
-                try {
-                    latch.send(Unit)
-                    delay(Long.MAX_VALUE)
-                } finally {
-                    captured += captureName()
-                }
+                latch.send(Unit)
+                hang { captured += captureName() }
             }.flowOn(named("cancelled")).single()
         }
 
@@ -150,18 +145,15 @@ class FlowOnTest : TestBase() {
         val order = ArrayList<Int>()
         launch {
             try {
+                // TODO expect
                 flow<Int> {
-                    try {
-                        order.add(1)
-                        val flowJob = kotlin.coroutines.coroutineContext[Job]!!
-                        launch {
-                            order.add(2)
-                            flowJob.cancel()
-                        }
-                        delay(Long.MAX_VALUE)
-                    } finally {
-                        order.add(3)
+                    order.add(1)
+                    val flowJob = kotlin.coroutines.coroutineContext[Job]!!
+                    launch {
+                        order.add(2)
+                        flowJob.cancel()
                     }
+                    hang { order.add(3) }
                 }.flowOn(named("upstream")).single()
             } catch (e: CancellationException) {
                 order.add(4)

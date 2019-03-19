@@ -4,6 +4,7 @@ import examples.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.terminal.*
 
 typealias Transformer<T, R> = suspend (T) -> R?
 

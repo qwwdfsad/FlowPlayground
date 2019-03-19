@@ -1,6 +1,5 @@
 package examples
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.builders.*

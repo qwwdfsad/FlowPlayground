@@ -1,7 +1,6 @@
 package kotlinx.coroutines.flow.terminal
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
 
 /**
  * Terminal operator, that awaits for one and only one value to be published.

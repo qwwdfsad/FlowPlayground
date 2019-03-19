@@ -36,6 +36,7 @@ private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, priva
         }
     }
 
+    @Suppress("SubscriberImplementation")
     private class ReactiveSubscriber<T>(private val channel: Channel<T>, private val batchSize: Int) : Subscriber<T> {
 
         lateinit var subscription: Subscription

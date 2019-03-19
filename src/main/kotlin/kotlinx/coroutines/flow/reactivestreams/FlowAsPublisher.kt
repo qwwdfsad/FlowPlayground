@@ -2,11 +2,14 @@ package kotlinx.coroutines.flow.reactivestreams
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.terminal.*
 import org.reactivestreams.*
 import java.util.concurrent.atomic.*
 
-fun <T: Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
+/**
+ * Transforms the given flow to a spec-compliant [Publisher]
+ */
+public fun <T: Any> Flow<T>.asPublisher(): Publisher<T> = FlowAsPublisher(this)
 
 /**
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].

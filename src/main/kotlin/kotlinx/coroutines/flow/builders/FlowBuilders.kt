@@ -30,15 +30,6 @@ public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend Fl
     }
 }
 
-// Crossinline bugs :(
-public fun <T : Any, R : Any> Flow<T>.transform(@BuilderInference block: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> {
-    return flow {
-        collect { value ->
-            block(value)
-        }
-    }
-}
-
 /**
  * Creates flow that produces single value from a given functional type.
  */
@@ -65,4 +56,5 @@ public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
 /**
  * Creates flow that produces values from a given array of elements.
  */
-public fun <T : Any> flowOf(vararg elements: T) = elements.asIterable().asFlow()
+
+public fun <T : Any> flowOf(vararg elements: T): Flow<T> = elements.asIterable().asFlow()

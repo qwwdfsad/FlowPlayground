@@ -2,13 +2,11 @@ package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
+import kotlinx.coroutines.flow.terminal.*
 
-fun <T: Any> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }
-
-suspend fun main() {
-    val f1 = flowOf(1, 2, 3, 4, 5).delayEach(100)
-    val f2 = flowOf(6, 7, 8, 9, 10).delayEach(75)
-    listOf(f1, f2).merge().collect {
-        println(it)
-    }
-}
+/**
+ * Merges given sequence of flows into a single flow with no guarantees on the order.
+ *
+ * TODO this is the least tested and documented place because it is trivially expressed via flatMap
+ */
+public fun <T: Any> Iterable<Flow<T>>.merge(): Flow<T> = asFlow().flatMap { it }

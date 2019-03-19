@@ -118,17 +118,11 @@ class FlowWithTest : TestBase() {
         val latch = Channel<Unit>()
         val job = launch {
             flow<Int> {
-                try {
-                    latch.send(Unit)
-                    delay(Long.MAX_VALUE)
-                } finally {
-                    captured += captureName()
-                }
+                latch.send(Unit)
+                hang { captured += captureName() }
             }.flowWith(named("cancelled")) {
-                    map { it
-                    }
-                }
-                .single()
+                map { it }
+            }.single()
         }
 
         latch.receive()
@@ -144,17 +138,13 @@ class FlowWithTest : TestBase() {
         launch {
             try {
                 flow<Int> {
-                    try {
-                        order.add(1)
-                        val flowJob = kotlin.coroutines.coroutineContext[Job]!!
-                        launch {
-                            order.add(2)
-                            flowJob.cancel()
-                        }
-                        delay(Long.MAX_VALUE)
-                    } finally {
-                        order.add(3)
+                    order.add(1)
+                    val flowJob = kotlin.coroutines.coroutineContext[Job]!!
+                    launch {
+                        order.add(2)
+                        flowJob.cancel()
                     }
+                    hang { order.add(3) }
                 }.flowWith(named("downstream")) {
                     map { it }
                 }
@@ -191,11 +181,7 @@ class FlowWithTest : TestBase() {
             captured += captureName()
             emit(Unit)
             latch.send(Unit)
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                invoked = true
-            }
+            hang { invoked = true }
         }.flowWith(named("downstream")) {
             map { Unit }
         }

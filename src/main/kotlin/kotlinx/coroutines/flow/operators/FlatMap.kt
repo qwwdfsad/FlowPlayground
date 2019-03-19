@@ -1,41 +1,53 @@
 package kotlinx.coroutines.flow.operators
 
-import io.reactivex.*
-import io.reactivex.functions.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.builders.*
-import java.util.concurrent.*
+import kotlinx.coroutines.flow.terminal.*
 import java.util.concurrent.atomic.*
 
-fun <T : Any, R : Any> Flow<T>.flatMap(mapper: (T) -> Flow<R>): Flow<R> =
-    flow {
-        // Let's try to leverage the fact that flatMap is never contended
-        val flatMap = FlatMapFlow(this)
-        val root = CompletableDeferred<Unit>()
-        collect {
-            val inner = mapper(it)
-            GlobalScope.launch(root + Dispatchers.Unconfined) {
-                inner.collect { value ->
-                    flatMap.push(value)
+/**
+ * Transforms elements emitted by the original flow by applying [mapper], that returns another flow of elements,
+ * and then merging and flattening such streams.
+ * With [bufferSize] parameter one can control the size of backpressure aka the amount of queued in-flight elements.
+ *
+ * TODO design
+ * This operator is not completely designed in the terms of its API shape and configurability.
+ *
+ * 1) delayErrors argument is not introduced. It is not that hard, but we need some rationale for that
+ * 2) context argument is not introduced for the same reason, context is inherited from the flow
+ * 3) Buffer size is not the same as `concurrency` parameter and there is no mechanism to effectively bound
+ *    amount of in-flight flows
+ */
+public fun <T : Any, R : Any> Flow<T>.flatMap(bufferSize: Int = 16, mapper: suspend (value: T) -> Flow<R>): Flow<R> {
+    return flow {
+        val flatMap = FlatMapFlow(this, bufferSize)
+        coroutineScope {
+            collect {
+                val inner = mapper(it)
+                launch {
+                    inner.collect { value ->
+                        flatMap.push(value)
+                    }
                 }
             }
         }
-
-        root.complete(Unit)
-        root.await()
     }
+}
 
-private class FlatMapFlow<T>(private val downstream: FlowCollector<T>) {
-    private val channel: Channel<T> by lazy { Channel<T>(16) }
+private class FlatMapFlow<T>(
+    private val downstream: FlowCollector<T>,
+    private val bufferSize: Int
+) {
+
+    // Let's try to leverage the fact that flatMap is never contended
+    private val channel: Channel<T> by lazy { Channel<T>(bufferSize) }
     private val inProgress = AtomicBoolean(false)
 
     suspend fun push(value: T) {
         if (!inProgress.compareAndSet(false, true)) {
             channel.send(value)
-            // TODO after a while it does not look that reliable
             if (inProgress.compareAndSet(false, true)) {
                 helpPush()
             }
@@ -55,43 +67,4 @@ private class FlatMapFlow<T>(private val downstream: FlowCollector<T>) {
 
         inProgress.set(false)
     }
-}
-
-suspend fun flowFlatMap() {
-    val base = System.currentTimeMillis()
-    flowOf(3, 4, 5).flatMap {
-        val index = it
-        val inner = Array(it) { "$index flowable, $it's element" }.asIterable().asFlow()
-        inner.delayEach(if (it == 5) it * 500L else it * 1000L)
-    }.collect {
-        val diff = (System.currentTimeMillis() - base) / 1000 * 1000
-        println("$it, ($diff)")
-    }
-}
-
-fun <T> Flowable<T>.delayEach(interval: Long, timeUnit: TimeUnit): Flowable<T> =
-    Flowable.zip(this, Flowable.interval(interval, timeUnit), BiFunction { item, _ -> item })
-
-suspend fun main() {
-    println("Flow flat map:")
-    flowFlatMap()
-    println("\n\nFlowable flat map:")
-    reactiveFlatMap()
-}
-
-private fun reactiveFlatMap() {
-    val latch = CountDownLatch(1)
-    val base = System.currentTimeMillis()
-    val flowable = Flowable.just(3, 4, 5).flatMap {
-        val index = it
-        val f = Flowable.fromArray(*Array(it) { "$index flowable, $it's element" })
-            .delayEach(if (it == 5) it * 500L else it * 1000L, TimeUnit.MILLISECONDS)
-        f
-    }
-
-    flowable.subscribe({
-        val diff = (System.currentTimeMillis() - base) / 1000 * 1000
-        println("$it, ($diff)")
-    }, { println(it) }, { latch.countDown() })
-    latch.await()
 }

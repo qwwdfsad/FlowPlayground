@@ -1,7 +1,6 @@
 package kotlinx.coroutines.flow.terminal
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
 import java.util.*
 
 /**
