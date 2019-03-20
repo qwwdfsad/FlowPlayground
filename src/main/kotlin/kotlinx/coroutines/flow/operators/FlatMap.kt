@@ -36,7 +36,7 @@ public fun <T : Any, R : Any> Flow<T>.flatMap(bufferSize: Int = 16, mapper: susp
     }
 }
 
-private class FlatMapFlow<T>(
+private class FlatMapFlow<T: Any>(
     private val downstream: FlowCollector<T>,
     private val bufferSize: Int
 ) {

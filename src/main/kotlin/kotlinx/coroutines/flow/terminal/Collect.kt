@@ -6,8 +6,7 @@ import kotlinx.coroutines.flow.*
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action].
- * If any exception occurs during collect or in the provided flow, this exception is rethrown from
- * this method.
+ * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
  *
  * Example of use:
  * ```

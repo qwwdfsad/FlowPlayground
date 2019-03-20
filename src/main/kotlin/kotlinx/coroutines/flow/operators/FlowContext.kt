@@ -28,7 +28,7 @@ import kotlin.coroutines.*
  *
  * @throws [IllegalStateException] if provided context contains [Job] instance.
  */
-fun <T : Any> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 16): Flow<T> {
+public fun <T : Any> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 16): Flow<T> {
     check(flowContext, bufferSize)
     return flow {
         // TODO optimize on similar context/dispatcher
@@ -41,12 +41,11 @@ fun <T : Any> Flow<T>.flowOn(flowContext: CoroutineContext, bufferSize: Int = 16
             }
 
             // TODO semantics doesn't play well here and we pay for that with additional object
-//            (channel as Job).invokeOnCompletion { if (it is CancellationException && it.cause == null) cancel() }
+            // (channel as Job).invokeOnCompletion { if (it is CancellationException && it.cause == null) cancel() }
             for (element in channel) {
                 emit(element)
             }
 
-            // TODO flowOnHappensBeforeTest
             val producer = channel as Job
             if (producer.isCancelled) {
                 producer.join()
@@ -89,7 +88,7 @@ public fun <T : Any, R : Any> Flow<T>.flowWith(
          * Here we should subtract Job instance from context.
          * All builders are written using scoping and no global coroutines are launched,
          * so it is safe. It is also necessary not to mess with cancellations
-         * if multiple flowWith are used
+         * if multiple flowWith are used.
          */
         val originalContext = coroutineContext.minusKey(Job)
         val prepared = this@flowWith.flowOn(originalContext, bufferSize)

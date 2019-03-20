@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.builders.*
 import kotlinx.coroutines.flow.terminal.*
 
 /**
- * Represents given broadcast channel as hot flow.
+ * Represents given broadcast channel as a hot flow.
  * Every flow consumer will trigger new broadcast channel subscription.
  *
  * ### Cancellation semantics

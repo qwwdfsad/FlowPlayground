@@ -1,10 +1,8 @@
 package kotlinx.coroutines.flow.operators
 
-import io.reactivex.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.builders.*
+import kotlinx.coroutines.flow.builders.unsafeFlow as flow // hehe
 import kotlinx.coroutines.flow.terminal.*
-import java.util.concurrent.*
 
 /**
  * Applies [transformer] function to each value of the given flow.

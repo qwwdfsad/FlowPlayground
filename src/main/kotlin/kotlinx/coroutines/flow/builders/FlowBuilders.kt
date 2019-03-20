@@ -3,7 +3,8 @@
 package kotlinx.coroutines.flow.builders
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.operators.*
+import kotlinx.coroutines.flow.internal.*
+import kotlin.coroutines.*
 import kotlin.experimental.*
 
 /**
@@ -23,10 +24,37 @@ import kotlin.experimental.*
  *   }
  * }
  * ```
+ *
+ * `emit` should happen strictly in the dispatchers of the [block] in order to preserve flow purity.
+ * For example, the following code will produce [IllegalStateException]:
+ * ```
+ * flow {
+ *   emit(1) // Ok
+ *   withContext(Dispatcher.IO) {
+ *       emit(2) // Will fail with ISE
+ *   }
+ * }
+ * ```
+ * If you want to switch the context where this flow is executed use [flowOn] operator.
  */
 public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
-        override suspend fun collect(collector: FlowCollector<T>) = collector.block()
+        override suspend fun collect(collector: FlowCollector<T>) {
+            SafeCollector(collector, coroutineContext[ContinuationInterceptor]).block()
+        }
+    }
+}
+
+/**
+ * Analogue of [flow] builder that does not check a context of flow execution.
+ * Used in our own operators where we trust the context of the invocation.
+ */
+@PublishedApi
+internal fun <T : Any> unsafeFlow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+    return object : Flow<T> {
+        override suspend fun collect(collector: FlowCollector<T>) {
+            collector.block()
+        }
     }
 }
 
@@ -45,9 +73,25 @@ public fun <T : Any> (suspend () -> T).asFlow(): Flow<T> = flow {
 }
 
 /**
+ * Creates flow that produces single value from a given functional type.
+ */
+public fun <T : Any> flowOf(supplier: (suspend () -> T)): Flow<T> = flow {
+    emit(supplier.invoke())
+}
+
+/**
  * Creates flow that produces values from a given iterable.
  */
 public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
+    forEach { value ->
+        emit(value)
+    }
+}
+
+/**
+ * Creates flow that produces values from a given sequence.
+ */
+public fun <T : Any> Sequence<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }

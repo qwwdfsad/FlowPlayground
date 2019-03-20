@@ -25,7 +25,7 @@ import kotlin.experimental.*
  * }
  * ```
  */
-public fun <T : Any> flowViaChannel(
+public fun <T : Any> flowViaChannel( // TODO bikeshed this naming?
     bufferSize: Int = 16,
     @BuilderInference block: suspend (SendChannel<T>) -> Unit
 ): Flow<T> {
