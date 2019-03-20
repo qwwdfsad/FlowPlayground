@@ -89,6 +89,16 @@ public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
+ * Creates flow that produces values from a given iterable.
+ */
+public fun <T : Any> Iterator<T>.asFlow(): Flow<T> = flow {
+    forEach { value ->
+        emit(value)
+    }
+}
+
+
+/**
  * Creates flow that produces values from a given sequence.
  */
 public fun <T : Any> Sequence<T>.asFlow(): Flow<T> = flow {

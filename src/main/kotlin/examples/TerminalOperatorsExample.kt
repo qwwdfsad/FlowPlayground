@@ -19,7 +19,7 @@ suspend fun <T : Any> Flow<T>.first(): T {
             result = value
             throw FlowConsumerAborted()
         }
-        result ?: throw NoSuchElementException("Flow is empty")
+        result ?: throw NoSuchElementException("Flow was empty")
     } catch (e: FlowConsumerAborted) {
         result ?: error("Flow was empty")
     }
@@ -31,7 +31,7 @@ suspend fun <T : Any> Flow<T>.last(): T {
         lastValue = value
     }
 
-    if (lastValue == null) throw NoSuchElementException("Flow is empty")
+    if (lastValue == null) throw NoSuchElementException("Flow was empty")
     return lastValue!!
 }
 
