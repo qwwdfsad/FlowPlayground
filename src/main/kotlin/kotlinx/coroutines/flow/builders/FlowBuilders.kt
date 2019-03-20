@@ -24,7 +24,7 @@ import kotlin.experimental.*
  * }
  * ```
  */
-public inline fun <T : Any> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) = collector.block()
     }
