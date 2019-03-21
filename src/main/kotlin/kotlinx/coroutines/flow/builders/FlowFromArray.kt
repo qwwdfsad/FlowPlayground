@@ -11,7 +11,6 @@ public fun <T: Any> Array<T>.asFlow(): Flow<T> = flow {
     }
 }
 
-
 /**
  * Creates flow that produces values from a given array.
  */

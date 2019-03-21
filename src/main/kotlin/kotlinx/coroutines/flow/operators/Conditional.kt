@@ -15,10 +15,10 @@ public fun <T : Any> Flow<T>.limit(count: Int): Flow<T> {
                 emit(value)
 
                 if (++consumed == count) {
-                    throw FlowConsumerAborted()
+                    throw FlowAbortedException()
                 }
             }
-        } catch (e: FlowConsumerAborted) {
+        } catch (e: FlowAbortedException) {
             // Do nothing TODO
         }
     }

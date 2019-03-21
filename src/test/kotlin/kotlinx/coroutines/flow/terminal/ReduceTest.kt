@@ -1,30 +1,28 @@
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow.terminal
 
-import examples.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
-import kotlinx.coroutines.flow.terminal.*
-import org.junit.Test
-import kotlin.test.*
+import org.junit.*
+import org.junit.Assert.*
 
-class MapTest : TestBase() {
+class ReduceTest : TestBase() {
     @Test
-    fun testMap() = runTest {
+    fun testReduce() = runTest {
         val flow = flow {
             emit(1)
             emit(2)
         }
 
-        val result = flow.map { it + 1 }.sum()
-        assertEquals(5, result)
+        val result = flow.reduce { value, acc -> value + acc }
+        assertEquals(3, result)
     }
 
     @Test
-    fun testEmptyFlow() = runTest {
-        val sum = flowOf<Int>().map { it + 1 }.sum()
-        assertEquals(0, sum)
+    fun testEmptyReduce() = runTest {
+        val flow = flowOf<Int>()
+        assertFailsWith<UnsupportedOperationException> { flow.reduce { value, acc -> value + acc } }
     }
 
     @Test
@@ -38,14 +36,16 @@ class MapTest : TestBase() {
                     hang { cancelled = true }
                 }
                 emit(1)
+                emit(2)
             }
-        }.map {
-            latch.receive()
-            throw TestException()
-            it + 1
-        }.onErrorReturn(42)
+        }
 
-        assertEquals(42, flow.single())
+        assertFailsWith<TestException> {
+            flow.reduce { _, _ ->
+                latch.receive()
+                throw TestException()
+            }
+        }
         assertTrue(cancelled)
     }
 }

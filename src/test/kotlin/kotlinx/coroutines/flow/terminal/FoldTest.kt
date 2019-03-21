@@ -1,30 +1,29 @@
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow.terminal
 
-import examples.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
-import kotlinx.coroutines.flow.terminal.*
+import org.junit.*
 import org.junit.Test
 import kotlin.test.*
 
-class MapTest : TestBase() {
+class FoldTest : TestBase() {
     @Test
-    fun testMap() = runTest {
+    fun testFold() = runTest {
         val flow = flow {
             emit(1)
             emit(2)
         }
 
-        val result = flow.map { it + 1 }.sum()
-        assertEquals(5, result)
+        val result = flow.fold(3) { value, acc -> value + acc }
+        assertEquals(6, result)
     }
 
     @Test
-    fun testEmptyFlow() = runTest {
-        val sum = flowOf<Int>().map { it + 1 }.sum()
-        assertEquals(0, sum)
+    fun testEmptyFold() = runTest {
+        val flow = flowOf<Int>()
+        assertEquals(42, flow.fold(42) { value, acc -> value + acc })
     }
 
     @Test
@@ -39,13 +38,14 @@ class MapTest : TestBase() {
                 }
                 emit(1)
             }
-        }.map {
-            latch.receive()
-            throw TestException()
-            it + 1
-        }.onErrorReturn(42)
+        }
 
-        assertEquals(42, flow.single())
-        assertTrue(cancelled)
+        assertFailsWith<TestException> {
+            flow.fold(42) { _, _ ->
+                latch.receive()
+                throw TestException()
+            }
+        }
+        Assert.assertTrue(cancelled)
     }
 }

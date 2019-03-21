@@ -1,10 +1,8 @@
 package examples
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
-import kotlinx.coroutines.flow.operators.*
 import kotlinx.coroutines.flow.terminal.*
 import java.util.*
 import kotlin.system.*
@@ -17,10 +15,10 @@ suspend fun <T : Any> Flow<T>.first(): T {
     return try {
         collect { value ->
             result = value
-            throw FlowConsumerAborted()
+            throw FlowAbortedException()
         }
         result ?: throw NoSuchElementException("Flow was empty")
-    } catch (e: FlowConsumerAborted) {
+    } catch (e: FlowAbortedException) {
         result ?: error("Flow was empty")
     }
 }
