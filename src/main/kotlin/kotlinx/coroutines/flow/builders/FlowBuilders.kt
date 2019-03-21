@@ -61,28 +61,26 @@ internal fun <T : Any> unsafeFlow(@BuilderInference block: suspend FlowCollector
 /**
  * Creates flow that produces single value from a given functional type.
  */
-public fun <T : Any> (() -> T).asFlow(): Flow<T> = flow {
+public fun <T : Any> (() -> T).asFlow(): Flow<T> = unsafeFlow {
     emit(invoke())
 }
 
 /**
  * Creates flow that produces single value from a given functional type.
  */
-public fun <T : Any> (suspend () -> T).asFlow(): Flow<T> = flow {
+public fun <T : Any> (suspend () -> T).asFlow(): Flow<T> = unsafeFlow {
     emit(invoke())
 }
 
 /**
  * Creates flow that produces single value from a given functional type.
  */
-public fun <T : Any> flowOf(supplier: (suspend () -> T)): Flow<T> = flow {
-    emit(supplier.invoke())
-}
+public fun <T : Any> flowOf(supplier: (suspend () -> T)): Flow<T> = supplier.asFlow()
 
 /**
  * Creates flow that produces values from a given iterable.
  */
-public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
+public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
     }
@@ -91,7 +89,7 @@ public fun <T : Any> Iterable<T>.asFlow(): Flow<T> = flow {
 /**
  * Creates flow that produces values from a given iterable.
  */
-public fun <T : Any> Iterator<T>.asFlow(): Flow<T> = flow {
+public fun <T : Any> Iterator<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
     }
@@ -101,7 +99,7 @@ public fun <T : Any> Iterator<T>.asFlow(): Flow<T> = flow {
 /**
  * Creates flow that produces values from a given sequence.
  */
-public fun <T : Any> Sequence<T>.asFlow(): Flow<T> = flow {
+public fun <T : Any> Sequence<T>.asFlow(): Flow<T> = unsafeFlow {
     forEach { value ->
         emit(value)
     }

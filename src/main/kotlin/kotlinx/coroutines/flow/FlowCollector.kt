@@ -11,7 +11,7 @@ public interface FlowCollector<T: Any> {
 
     /**
      * Emits the current value into a downstream.
-     * TODO carefully explain in detail what this method does ?
+     * TODO carefully explain in detail what this method does?
      */
     public suspend fun emit(value: T)
 }
