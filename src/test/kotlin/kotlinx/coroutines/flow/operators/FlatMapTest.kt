@@ -1,7 +1,6 @@
 package kotlinx.coroutines.flow.operators
 
 import examples.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.builders.*
@@ -14,18 +13,15 @@ class FlatMapTest : TestBase() {
     @Test
     fun testFlatMap() = runTest {
         val n = 100
-        val sum = flow {
-            repeat(n) {
-                emit(it + 1) // 1..100
-            }
-        }.flatMap { value ->
-            // 1 + (1 + 2) + (1 + 2 + 3) + ... (1 + .. + n)
-            flow {
-                repeat(value) {
-                    emit(it + 1)
+        val sum = (1..100).asFlow()
+            .flatMap { value ->
+                // 1 + (1 + 2) + (1 + 2 + 3) + ... (1 + .. + n)
+                flow {
+                    repeat(value) {
+                        emit(it + 1)
+                    }
                 }
-            }
-        }.sum()
+            }.sum()
 
         assertEquals(n * (n + 1) * (n + 2) / 6, sum)
     }

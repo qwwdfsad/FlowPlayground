@@ -22,8 +22,8 @@ private class PublisherAsFlow<T: Any>(private val publisher: Publisher<T>, priva
         val channel = Channel<T>(batchSize)
         val subscriber = ReactiveSubscriber(channel, batchSize)
         publisher.subscribe(subscriber)
-        var consumed = 0
         try {
+            var consumed = 0
             for (i in channel) {
                 collector.emit(i)
                 if (++consumed == batchSize) {

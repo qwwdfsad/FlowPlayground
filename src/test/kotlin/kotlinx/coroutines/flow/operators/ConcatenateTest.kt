@@ -11,15 +11,12 @@ class ConcatenateTest : TestBase() {
     @Test
     fun testConcatenate() = runTest {
         val n = 100
-        val sum = flow {
-            repeat(n) {
-                emit(it + 1) // 1..100
-            }
-        }.map { value ->
-            flow {
-                repeat(value) {
-                    emit(it + 1)
-                }
+        val sum = (1..n).asFlow()
+            .map { value ->
+                flow {
+                    repeat(value) {
+                        emit(it + 1)
+                    }
             }
         }.concatenate().sum()
 

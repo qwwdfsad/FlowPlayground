@@ -23,25 +23,20 @@ import java.util.concurrent.*
 @Fork(1)
 open class FuseBenchmark {
 
-    private val source = flow {
-        repeat(10_000) {
-            emit(it)
-        }
-    }.map { it + 1 }
+    private val source = (0..10_000).asFlow()
+        .map { it + 1 }
         .map { it - 1 }
         .filter { true }
 
-    private val fusedInlineSource = flow {
-        repeat(10_000) {
-            emit(it)
-        }
-    }.fusedMap() { it + 1 }
+    private val fusedInlineSource = (0..10_000).asFlow()
+        .fusedMap { it + 1 }
         .fusedMap { it - 1 }
         .fusedFilter { true }
 
-    private val flux = Flux.range(0, 10_000).map { it + 1 }
+    private val flux = Flux.range(0, 10_000)
+        .map { it + 1 }
         .map { it - 1 }
-        .filter() { true }
+        .filter { true }
 
     private var state = 0
     private val fluxGenerated = Flux.generate<Int> { sink ->
@@ -52,7 +47,7 @@ open class FuseBenchmark {
         }
     }.map { it + 1 }
         .map { it - 1 }
-        .filter() { true }
+        .filter { true }
 
     @Benchmark
     fun flux() = flux.reduce(0) { x1, x2 -> x1 + x2 }.block()

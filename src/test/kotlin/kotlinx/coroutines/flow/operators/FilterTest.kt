@@ -12,11 +12,7 @@ import kotlin.test.*
 class FilterTest : TestBase() {
     @Test
     fun testFilter() = runTest {
-        val flow = flow {
-            emit(1)
-            emit(2)
-        }
-
+        val flow = flowOf(1, 2)
         assertEquals(2, flow.filter { it % 2 == 0 }.sum())
         assertEquals(3, flow.filter { true }.sum())
         assertEquals(0, flow.filter { false }.sum())

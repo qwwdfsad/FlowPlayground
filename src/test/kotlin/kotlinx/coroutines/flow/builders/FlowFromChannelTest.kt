@@ -55,7 +55,6 @@ class FlowFromChannelTest {
             runCatching {  it.offer(++i) }
         }
 
-
         val flow = flowViaChannel<Int> { channel ->
             api.start(channel)
             channel.invokeOnClose {
@@ -94,8 +93,11 @@ class FlowFromChannelTest {
     fun testThrowingSource() = runBlocking {
         var i = 0
         val api = CallbackApi {
-            it.offer(++i)
-            if (i == 5) it.close(RuntimeException())
+            if (i < 5) {
+                it.offer(++i)
+            } else {
+                it.close(RuntimeException())
+            }
         }
 
         val flow = flowViaChannel<Int> { channel ->
@@ -116,7 +118,7 @@ class FlowFromChannelTest {
 
         job.join()
         assertTrue(isDone)
-        assertTrue { exception is java.lang.RuntimeException }
+        assertTrue { exception is RuntimeException }
 
         assertTrue(api.started)
         assertTrue(api.stopped)
