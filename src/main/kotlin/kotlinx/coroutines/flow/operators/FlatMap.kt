@@ -10,6 +10,10 @@ import java.util.concurrent.atomic.*
 /**
  * Transforms elements emitted by the original flow by applying [mapper], that returns another flow of elements,
  * and then merging and flattening such streams.
+ * Note that even though this operator looks very familiar, we discourage its usage in a regular business-domain
+ * flows. Most likely, suspending operation in [map] operator will be sufficient and linear
+ * transformations are much easier to reason about.
+ *
  * With [bufferSize] parameter one can control the size of backpressure aka the amount of queued in-flight elements.
  *
  * TODO design
