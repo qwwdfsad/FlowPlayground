@@ -22,8 +22,8 @@ fun fibonacci(): Flow<Long> = flow {
 
 suspend fun main() {
     fibonacci()
-        .limit(10)
-        .skip(5).collect { value ->
+        .take(10)
+        .drop(5).collect { value ->
             println(value)
         }
 }

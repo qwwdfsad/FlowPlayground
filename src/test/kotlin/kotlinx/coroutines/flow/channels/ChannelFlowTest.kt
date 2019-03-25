@@ -31,14 +31,14 @@ class ChannelFlowTest : TestBase() {
             }
             throw TestException()
         }
-        assertEquals(15, channel.asFlow().limit(5).sum())
+        assertEquals(15, channel.asFlow().take(5).sum())
         assertFailsWith<TestException>(channel.asFlow())
     }
 
     @Test
     fun testBroadcastChannelAsFlowLimits() = runTest {
         val channel = BroadcastChannel<Int>(1)
-        val flow = channel.asFlow().map { it * it }.skip(1).limit(2)
+        val flow = channel.asFlow().map { it * it }.drop(1).take(2)
 
         var expected = 0
         launch {

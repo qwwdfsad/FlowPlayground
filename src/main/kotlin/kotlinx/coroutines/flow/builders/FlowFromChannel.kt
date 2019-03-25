@@ -37,13 +37,8 @@ public fun <T : Any> flowViaChannel( // TODO bikeshed this naming?
                 block(channel)
             }
 
-            // TODO consumeEach on channel?
-            try {
-                for (value in channel) {
-                    emit(value)
-                }
-            } finally {
-                channel.cancel()
+            channel.consumeEach { value ->
+                emit(value)
             }
         }
     }

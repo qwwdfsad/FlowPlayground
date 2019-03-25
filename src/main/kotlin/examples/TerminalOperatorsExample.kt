@@ -15,15 +15,17 @@ suspend fun <T : Any> Flow<T>.first(): T {
     return try {
         collect { value ->
             result = value
-            throw FlowAbortedException()
+            throw FlowConsumedException()
         }
         result ?: throw NoSuchElementException("Flow was empty")
-    } catch (e: FlowAbortedException) {
+    } catch (e: FlowConsumedException) {
         result ?: error("Flow was empty")
     }
 }
 
-suspend fun <T : Any> Flow<T>.last(): T {
+private class FlowConsumedException : CancellationException("First element is consumed")
+
+    suspend fun <T : Any> Flow<T>.last(): T {
     var lastValue: T? = null
     collect { value ->
         lastValue = value
@@ -39,7 +41,7 @@ suspend fun main() {
     val flow = flow {
         emit(1)
         delay(1000)
-        // Note that this one will not be printed for first
+        // Note that this one will not be printed for 'first' as it wll be cancelled
         println("Emitting after delay")
         emit(2)
     }

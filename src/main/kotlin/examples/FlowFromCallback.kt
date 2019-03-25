@@ -79,7 +79,7 @@ suspend fun main() {
             it
         }
         .flowOn(mapperContext)
-        .limit(3)
+        .take(3)
 
     println("Flow prepared")
 
