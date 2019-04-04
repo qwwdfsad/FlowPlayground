@@ -99,20 +99,25 @@ class FlowOnTest : TestBase() {
         ensureActive()
     }
 
+    val tl = ThreadLocal<Int>()
+
     @Test
     public fun testFlowOnThrowingConsumer() = runTest("main") {
         val flow = flow {
-            emit(captureName())
-            delay(Long.MAX_VALUE)
-        }
+            emit(1)
+            emit(2)
+//            delay(Long.MAX_VALUE)
+        }.flatMap { v -> flow {
+            emit(v)
+        }.flowOn(named("2 + $v") + tl.asContextElement()) }
 
-        var success = false
-        flow.flowOn(named("...")).launchIn(this + Dispatchers.Unconfined) {
-            onEach { throw TestException() }
-            catch<Throwable> { success = it is TestException }
+        flow.flowOn(named("...") + tl.asContextElement()).launchIn(this + Dispatchers.Unconfined) {
+            onEach {
+                println("Have $it")
+            }
         }.join()
 
-        assertTrue(success)
+//        assertTrue(success)
         ensureActive()
     }
 

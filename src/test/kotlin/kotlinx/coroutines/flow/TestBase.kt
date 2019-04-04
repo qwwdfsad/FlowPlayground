@@ -79,7 +79,6 @@ open class TestBase {
         } finally {
             onCancellation()
         }
-
     }
 }
 

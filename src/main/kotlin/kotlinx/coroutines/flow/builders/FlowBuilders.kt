@@ -40,7 +40,7 @@ import kotlin.experimental.*
 public fun <T : Any> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) {
-            SafeCollector(collector, coroutineContext[ContinuationInterceptor]).block()
+            SafeCollector(collector, coroutineContext).block()
         }
     }
 }
